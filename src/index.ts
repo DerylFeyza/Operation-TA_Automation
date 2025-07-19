@@ -2,17 +2,20 @@ const express = require("express");
 import dotenv from "dotenv";
 dotenv.config();
 import OracleDB from "oracledb";
-
+import multer from "multer";
 import { automate } from "./action/automate";
-import { getUsers } from "./utils/naker.query";
+import ExcelJS from "exceljs";
+import { getTeknisi } from "./utils/naker.query";
 import { getAksesSCMT } from "./utils/operation.query";
 import type { Request, Response } from "express";
+import fs from "fs";
 
 const app = express();
 const PORT = 3000;
+const upload = multer({ dest: "uploads/" });
 
 app.get("/automate", async (req: Request, res: Response) => {
-	const result = await getUsers();
+	const result = await getTeknisi();
 	res.send(result);
 });
 
@@ -21,10 +24,34 @@ app.get("/akses-scmt", async (req: Request, res: Response) => {
 	res.send(result);
 });
 
-app.get("/test", (req: Request, res: Response) => {
-	console.log("Client Version:", OracleDB.oracleClientVersionString);
-	res.send("Automation process started");
-});
+app.post(
+	"/upload",
+	upload.single("sheet"),
+	async (req: Request, res: Response) => {
+		try {
+			const filePath = req?.file?.path;
+			if (!filePath) return res.status(400).send("No file uploaded");
+
+			const processedWorkbook = await automate(filePath);
+			res.setHeader(
+				"Content-Disposition",
+				"attachment; filename=processed.xlsx"
+			);
+			res.setHeader(
+				"Content-Type",
+				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+			);
+
+			await processedWorkbook.xlsx.write(res);
+			res.end();
+
+			fs.unlinkSync(filePath);
+		} catch (err) {
+			console.error(err);
+			res.status(500).send("Error processing Excel file");
+		}
+	}
+);
 
 app.listen(PORT, () => {
 	console.log(`Server running on http://localhost:${PORT}`);
