@@ -23,7 +23,6 @@ export const validateTeleAccess = async (
 		}
 	});
 
-	console.log("formatIDTele:", formatIDTele);
 	const aksesTele = await getAksesTele(formatIDTele);
 	if (aksesTele.length > 0) {
 		const aksesTeleSheet = await initializeMyTechSheet(workbook, "akses_tele");
@@ -210,4 +209,111 @@ export const validateOldNIK = async (
 			});
 		}
 	}
+};
+
+export const highlightAndFormat = async (
+	workbook: ExcelJS.Workbook,
+	validationSheet: ExcelJS.Worksheet
+) => {
+	// Highlight duplicates in column A and sort by color and value
+	const lastRow = validationSheet.actualRowCount;
+	const valueCounts: { [key: string]: number } = {};
+
+	// Step 1: Collect all values from column A and count occurrences
+	for (let row = 2; row <= lastRow; row++) {
+		const cellValue = validationSheet.getCell(`A${row}`).value;
+		if (cellValue !== null && cellValue !== undefined) {
+			const strValue = String(cellValue);
+			valueCounts[strValue] = (valueCounts[strValue] || 0) + 1;
+		}
+	}
+
+	// Step 2: Highlight duplicates in light green
+	for (let row = 2; row <= lastRow; row++) {
+		const cellValue = validationSheet.getCell(`A${row}`).value;
+		if (cellValue !== null && cellValue !== undefined) {
+			const strValue = String(cellValue);
+			if (valueCounts[strValue] > 1) {
+				validationSheet.getCell(`A${row}`).fill = {
+					type: "pattern",
+					pattern: "solid",
+					fgColor: { argb: "FF90EE90" }, // Light green
+				};
+			}
+		}
+	}
+
+	// Step 3: Create an array of rows for sorting
+	const rowsToSort: {
+		rowNum: number;
+		rowData: any[];
+		isDuplicate: boolean;
+		value: any;
+	}[] = [];
+
+	for (let row = 2; row <= lastRow; row++) {
+		const cellValue = validationSheet.getCell(`A${row}`).value;
+		const rowData: any[] = [];
+
+		// Store all cell values and styles in the row
+		for (let col = 1; col <= validationSheet.columnCount; col++) {
+			const cell = validationSheet.getCell(row, col);
+			rowData.push({
+				value: cell.value,
+				style: cell.style ? JSON.parse(JSON.stringify(cell.style)) : null,
+			});
+		}
+
+		rowsToSort.push({
+			rowNum: row,
+			rowData: rowData,
+			isDuplicate: valueCounts[String(cellValue)] > 1,
+			value: cellValue,
+		});
+	}
+
+	// Step 4: Sort the array (duplicates first, then by value)
+	rowsToSort.sort((a, b) => {
+		// First sort by isDuplicate (true comes before false)
+		if (a.isDuplicate !== b.isDuplicate) {
+			return a.isDuplicate ? -1 : 1;
+		}
+		// Then sort by value
+		if (a.value === b.value) return 0;
+		return a.value < b.value ? -1 : 1;
+	});
+
+	// Step 5: Create a new worksheet with the sorted data
+	const tempSheet = workbook.addWorksheet("TempSorted");
+
+	// Copy header row
+	for (let col = 1; col <= validationSheet.columnCount; col++) {
+		tempSheet.getCell(1, col).value = validationSheet.getCell(1, col).value;
+		const headerCell = validationSheet.getCell(1, col);
+		if (headerCell.style) {
+			tempSheet.getCell(1, col).style = JSON.parse(
+				JSON.stringify(headerCell.style)
+			);
+		}
+	}
+
+	// Copy sorted rows
+	rowsToSort.forEach((item, index) => {
+		const targetRowNum = index + 2;
+
+		for (let col = 1; col <= validationSheet.columnCount; col++) {
+			const targetCell = tempSheet.getCell(targetRowNum, col);
+			const sourceData = item.rowData[col - 1];
+
+			targetCell.value = sourceData.value;
+			if (sourceData.style) {
+				targetCell.style = sourceData.style;
+			}
+		}
+	});
+
+	// Replace validation sheet with sorted data
+	const validationSheetName = validationSheet.name;
+	workbook.removeWorksheet(validationSheet.id);
+	tempSheet.name = validationSheetName;
 };

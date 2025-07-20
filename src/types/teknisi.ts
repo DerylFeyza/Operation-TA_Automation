@@ -28,3 +28,21 @@ export interface AksesMytechType {
 	APLIKASI: string;
 	XS1: string;
 }
+
+export interface AksesSCMTType {
+	TECHNICIAN_CODE: string;
+	TECHNICIAN_NAME: string;
+	TECHNICIAN_STATUS: string;
+	CREATED_DATE: Date;
+	WH_CODE: string | null;
+	WH_DESCRIPTION: string | null;
+	WITEL_CODE: string | null;
+	WITEL_NAME: string | null;
+	ONT: number;
+	STB: number;
+	OTHER: number;
+	TOTAL_NTE: number;
+	LAST_TRANSACTION: Date | null;
+	TIME_STAMP: Date;
+	TECHNICIAN_CODE_REF: string;
+}

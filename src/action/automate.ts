@@ -1,8 +1,18 @@
 import ExcelJS from "exceljs";
 import { getTeknisi } from "../utils/naker.query";
-import { initializeValidationSheet, initializeQuerySheet } from "./sheets";
+import {
+	initializeValidationSheet,
+	initializeQuerySheet,
+	initializeMyTechSheet,
+	initializeSCMTSheet,
+} from "./sheets";
 import { TeknisiType, NIKLamaType, AksesMytechType } from "../types/teknisi";
-import { validateTeleAccess, validateOldNIK } from "./validation";
+import { getAksesMyTech, getAksesSCMT } from "../utils/operation.query";
+import {
+	validateTeleAccess,
+	validateOldNIK,
+	highlightAndFormat,
+} from "./validation";
 
 export const automate = async (filePath: string) => {
 	try {
@@ -122,6 +132,128 @@ export const automate = async (filePath: string) => {
 				validationSheet.getCell(`AB${row}`).value = matchingSourceRow.col8;
 			}
 		}
+
+		const formatLabor: any[] = [];
+		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+			if (rowNumber >= 2) {
+				let cellValue = row.getCell(17).value;
+				// Convert to string if not already a string and not null/undefined
+				if (
+					cellValue !== null &&
+					cellValue !== undefined &&
+					typeof cellValue !== "string"
+				) {
+					cellValue = String(cellValue);
+				}
+				formatLabor.push(cellValue);
+			}
+		});
+
+		const aksesMytech = await getAksesMyTech(formatLabor);
+		const aksesSCMT = await getAksesSCMT(formatLabor);
+
+		const mytechSheet = await initializeMyTechSheet(workbook, "mytech");
+		const scmtSheet = await initializeSCMTSheet(workbook);
+		const aksesMytechRows = Array.isArray(aksesMytech)
+			? aksesMytech
+			: aksesMytech[0] || [];
+
+		const aksesSCMTRows = Array.isArray(aksesSCMT)
+			? aksesSCMT
+			: aksesSCMT[0] || [];
+
+		aksesMytechRows.forEach((row: AksesMytechType) => {
+			mytechSheet.addRow([
+				row.USER_ID,
+				row.CODE,
+				typeof row.ACCOUNT_ID === "string" && /^\d+$/.test(row.ACCOUNT_ID)
+					? Number(row.ACCOUNT_ID)
+					: row.ACCOUNT_ID,
+				row.NAME,
+				row.EMAIL,
+				row.CREATE_DTM,
+				row.STATUS_USER,
+				row.MSISDN,
+				row.APLIKASI,
+				row.XS1,
+			]);
+		});
+
+		aksesSCMTRows.forEach((row: any) => {
+			scmtSheet.addRow([
+				typeof row.TECHNICIAN_CODE === "string" &&
+				/^\d+$/.test(row.TECHNICIAN_CODE)
+					? Number(row.TECHNICIAN_CODE)
+					: row.TECHNICIAN_CODE,
+				row.TECHNICIAN_NAME,
+				row.TECHNICIAN_STATUS,
+				row.CREATED_DATE,
+				row.WH_CODE,
+				row.WH_DESCRIPTION,
+				row.WITEL_CODE,
+				row.WITEL_NAME,
+				row.ONT,
+				row.STB,
+				row.OTHER,
+				row.TOTAL_NTE,
+				row.LAST_TRANSACTION,
+				row.TIME_STAMP,
+				row.TECHNICIAN_CODE_REF,
+			]);
+		});
+
+		const lastValidationRow = validationSheet.actualRowCount;
+		for (let row = 2; row <= lastValidationRow; row++) {
+			const lookupValue = validationSheet.getCell(`Q${row}`).value;
+			let result = "-";
+			let scmtresult = "-";
+			let scmtwh = "-";
+			let scmtnte = 0;
+
+			if (lookupValue !== null && lookupValue !== undefined) {
+				let foundInMytech = false;
+				mytechSheet.eachRow(
+					{ includeEmpty: false },
+					(mytechRow, mytechRowNum) => {
+						if (!foundInMytech && mytechRowNum >= 2) {
+							const mytechValue = mytechRow.getCell(3).value;
+							if (
+								mytechValue !== null &&
+								mytechValue !== undefined &&
+								String(mytechValue) === String(lookupValue)
+							) {
+								result = mytechRow.getCell(7).value || "-";
+								foundInMytech = true;
+							}
+						}
+					}
+				);
+
+				let foundInScmt = false;
+				scmtSheet.eachRow({ includeEmpty: false }, (scmtRow, scmtRowNum) => {
+					if (!foundInScmt && scmtRowNum >= 2) {
+						const scmtValue = scmtRow.getCell(1).value;
+						if (
+							scmtValue !== null &&
+							scmtValue !== undefined &&
+							String(scmtValue) === String(lookupValue)
+						) {
+							scmtresult = scmtRow.getCell(3).value || "-";
+							scmtwh = scmtRow.getCell(5).value || "-";
+							scmtnte = scmtRow.getCell(12).value || 0;
+							foundInScmt = true;
+						}
+					}
+				});
+			}
+
+			validationSheet.getCell(`X${row}`).value = result;
+			validationSheet.getCell(`Y${row}`).value = scmtresult;
+			validationSheet.getCell(`Z${row}`).value = scmtwh;
+			validationSheet.getCell(`AA${row}`).value = scmtnte;
+		}
+
+		await highlightAndFormat(workbook, validationSheet);
 
 		return workbook;
 	} catch (error) {

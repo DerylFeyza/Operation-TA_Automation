@@ -83,3 +83,26 @@ export const initializeMyTechSheet = async (workbook: any, sheet: string) => {
 	myTechSheet.addRow(myTechHeaders);
 	return myTechSheet;
 };
+
+export const initializeSCMTSheet = async (workbook: any) => {
+	const scmtSheet = workbook.addWorksheet("scmt");
+	const scmtHeaders = [
+		"TECHNICIAN_CODE",
+		"TECHNICIAN_NAME",
+		"TECHNICIAN_STATUS",
+		"CREATED_DATE",
+		"WH_CODE",
+		"WH_DESCRIPTION",
+		"WITEL_CODE",
+		"WITEL_NAME",
+		"ONT",
+		"STB",
+		"OTHER",
+		"TOTAL_NTE",
+		"LAST_TRANSACTION",
+		"TIME_STAMP",
+		"TECHNICIAN_CODE_REF",
+	];
+	scmtSheet.addRow(scmtHeaders);
+	return scmtSheet;
+};
