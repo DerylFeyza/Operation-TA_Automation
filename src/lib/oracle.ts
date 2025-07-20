@@ -13,8 +13,7 @@ const dbConfig = {
 	connectString: process.env.ORACLE_CONNECTION_STRING,
 };
 
-// Configure Oracle client
-oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT; // Return results as objects instead of arrays
+oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 
 export async function executeQuery(sql: string, binds: any[] = []) {
 	let connection;

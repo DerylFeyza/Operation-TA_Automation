@@ -65,3 +65,21 @@ export const initializeNIKLama2Sheet = async (workbook: any) => {
 	nikLama2Sheet.addRow(nikLama2Headers);
 	return nikLama2Sheet;
 };
+
+export const initializeMyTechSheet = async (workbook: any, sheet: string) => {
+	const myTechSheet = workbook.addWorksheet(sheet);
+	const myTechHeaders = [
+		"USER_ID",
+		"CODE",
+		"ACCOUNT_ID",
+		"NAME",
+		"EMAIL",
+		"CREATE_DTM",
+		"STATUS_USER",
+		"MSISDN",
+		"APLIKASI",
+		"ID_TELEGRAM",
+	];
+	myTechSheet.addRow(myTechHeaders);
+	return myTechSheet;
+};
