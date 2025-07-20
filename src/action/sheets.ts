@@ -51,3 +51,17 @@ export const initializeQuerySheet = async (workbook: any) => {
 	querySheet.addRow(queryheaders);
 	return querySheet;
 };
+
+export const initializeNIKLama1Sheet = async (workbook: any) => {
+	const nikLama1Sheet = workbook.addWorksheet("niklama1");
+	const nikLama1Headers = ["nik baru", "nik lama"];
+	nikLama1Sheet.addRow(nikLama1Headers);
+	return nikLama1Sheet;
+};
+
+export const initializeNIKLama2Sheet = async (workbook: any) => {
+	const nikLama2Sheet = workbook.addWorksheet("niklama2");
+	const nikLama2Headers = ["nik baru", "nik lama", "nik lama 2"];
+	nikLama2Sheet.addRow(nikLama2Headers);
+	return nikLama2Sheet;
+};

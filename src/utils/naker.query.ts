@@ -1,6 +1,9 @@
 import { mysqlpool as mysql } from "../lib/mysql";
+import { TeknisiType, NIKLamaType } from "../types/teknisi";
 
-export async function getTeknisi(nikList: string[] = []) {
+export async function getTeknisi(
+	nikList: string[] = []
+): Promise<TeknisiType[]> {
 	const placeholders = nikList.map(() => "?").join(",");
 	const [rows] = await mysql.query(
 		`SELECT * FROM (SELECT
@@ -98,14 +101,16 @@ WHERE me.status_naker IN (1,4) AND om.level_idx<>'10'
 	);
 
 	console.log(rows);
-	return rows;
+	return rows as TeknisiType[];
 }
 
-export async function cekNIKLama(nikList: string[] = []) {
+export async function cekNIKLama(
+	nikList: string[] = []
+): Promise<NIKLamaType[]> {
 	const placeholders = nikList.map(() => "?").join(",");
 	const [rows] = await mysql.query(
 		`select nik_baru,nik_lama from naker.history_nik hn where nik_baru in (${placeholders})`,
 		nikList
 	);
-	return rows;
+	return rows as NIKLamaType[];
 }
