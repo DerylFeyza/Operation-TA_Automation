@@ -11,6 +11,10 @@ import fs from "fs";
 const app = express();
 const upload = multer({ dest: "uploads/" });
 
+app.get("/", (req: Request, res: Response) => {
+	res.send("NDE Format Automation API by deryl");
+});
+
 app.post(
 	"/upload",
 	upload.single("sheet"),
