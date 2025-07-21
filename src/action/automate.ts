@@ -12,7 +12,9 @@ import {
 	validateTeleAccess,
 	validateOldNIK,
 	highlightAndFormat,
+	translateWHParadise,
 } from "./validation";
+import { evaluateRow } from "./evaluate";
 
 export const automate = async (filePath: string) => {
 	try {
@@ -251,7 +253,8 @@ export const automate = async (filePath: string) => {
 			validationSheet.getCell(`Z${row}`).value = scmtwh;
 			validationSheet.getCell(`AA${row}`).value = scmtnte;
 		}
-
+		await translateWHParadise(workbook, validationSheet);
+		await evaluateRow(validationSheet);
 		await highlightAndFormat(workbook, validationSheet);
 
 		return workbook;

@@ -303,3 +303,68 @@ export const highlightAndFormat = async (
 	workbook.removeWorksheet(validationSheet.id);
 	tempSheet.name = validationSheetName;
 };
+
+export const translateWHParadise = async (
+	mainWorkbook: ExcelJS.Workbook,
+	validationSheet: ExcelJS.Worksheet
+) => {
+	const workbook = new ExcelJS.Workbook();
+	try {
+		await workbook.xlsx.readFile("src/resources/scmt-paradise.xlsx");
+
+		const sourceWorksheet = workbook.getWorksheet(1);
+		if (!sourceWorksheet) {
+			console.error("Worksheet not found in scmt-paradise.xlsx");
+			return null;
+		}
+
+		const targetWorksheet = mainWorkbook.addWorksheet("scmt-paradise");
+
+		sourceWorksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+			const targetRow = targetWorksheet.getRow(rowNumber);
+
+			row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+				targetRow.getCell(colNumber).value = cell.value;
+				if (cell.style) {
+					targetRow.getCell(colNumber).style = JSON.parse(
+						JSON.stringify(cell.style)
+					);
+				}
+			});
+
+			targetRow.commit();
+		});
+
+		const dimensionToCodeMap = new Map();
+		targetWorksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+			if (rowNumber > 1) {
+				const dimension = String(row.getCell("E").value || "");
+				const code = String(row.getCell("A").value || "");
+				if (dimension && code) {
+					dimensionToCodeMap.set(dimension.trim(), code);
+				}
+			}
+		});
+
+		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+			if (rowNumber > 1) {
+				const cellLValue = String(row.getCell("L").value || "");
+				for (const [dimension, code] of dimensionToCodeMap.entries()) {
+					if (cellLValue.includes(dimension)) {
+						const updatedValue = cellLValue.replace(
+							dimension,
+							`${dimension}(${code})`
+						);
+						row.getCell("L").value = updatedValue;
+						break;
+					}
+				}
+			}
+		});
+
+		return targetWorksheet;
+	} catch (error) {
+		console.error("Error reading scmt-paradise.xlsx:", error);
+		return null;
+	}
+};
