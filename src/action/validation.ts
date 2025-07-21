@@ -213,11 +213,9 @@ export const highlightAndFormat = async (
 	workbook: ExcelJS.Workbook,
 	validationSheet: ExcelJS.Worksheet
 ) => {
-	// Highlight duplicates in column A and sort by color and value
 	const lastRow = validationSheet.actualRowCount;
 	const valueCounts: { [key: string]: number } = {};
 
-	// Step 1: Collect all values from column A and count occurrences
 	for (let row = 2; row <= lastRow; row++) {
 		const cellValue = validationSheet.getCell(`A${row}`).value;
 		if (cellValue !== null && cellValue !== undefined) {
@@ -226,7 +224,6 @@ export const highlightAndFormat = async (
 		}
 	}
 
-	// Step 2: Highlight duplicates in light green
 	for (let row = 2; row <= lastRow; row++) {
 		const cellValue = validationSheet.getCell(`A${row}`).value;
 		if (cellValue !== null && cellValue !== undefined) {
@@ -235,13 +232,12 @@ export const highlightAndFormat = async (
 				validationSheet.getCell(`A${row}`).fill = {
 					type: "pattern",
 					pattern: "solid",
-					fgColor: { argb: "FF90EE90" }, // Light green
+					fgColor: { argb: "FF90EE90" },
 				};
 			}
 		}
 	}
 
-	// Step 3: Create an array of rows for sorting
 	const rowsToSort: {
 		rowNum: number;
 		rowData: any[];
@@ -253,7 +249,6 @@ export const highlightAndFormat = async (
 		const cellValue = validationSheet.getCell(`A${row}`).value;
 		const rowData: any[] = [];
 
-		// Store all cell values and styles in the row
 		for (let col = 1; col <= validationSheet.columnCount; col++) {
 			const cell = validationSheet.getCell(row, col);
 			rowData.push({
@@ -270,21 +265,16 @@ export const highlightAndFormat = async (
 		});
 	}
 
-	// Step 4: Sort the array (duplicates first, then by value)
 	rowsToSort.sort((a, b) => {
-		// First sort by isDuplicate (true comes before false)
 		if (a.isDuplicate !== b.isDuplicate) {
 			return a.isDuplicate ? -1 : 1;
 		}
-		// Then sort by value
 		if (a.value === b.value) return 0;
 		return a.value < b.value ? -1 : 1;
 	});
 
-	// Step 5: Create a new worksheet with the sorted data
 	const tempSheet = workbook.addWorksheet("TempSorted");
 
-	// Copy header row
 	for (let col = 1; col <= validationSheet.columnCount; col++) {
 		tempSheet.getCell(1, col).value = validationSheet.getCell(1, col).value;
 		const headerCell = validationSheet.getCell(1, col);
@@ -295,7 +285,6 @@ export const highlightAndFormat = async (
 		}
 	}
 
-	// Copy sorted rows
 	rowsToSort.forEach((item, index) => {
 		const targetRowNum = index + 2;
 
@@ -310,7 +299,6 @@ export const highlightAndFormat = async (
 		}
 	});
 
-	// Replace validation sheet with sorted data
 	const validationSheetName = validationSheet.name;
 	workbook.removeWorksheet(validationSheet.id);
 	tempSheet.name = validationSheetName;

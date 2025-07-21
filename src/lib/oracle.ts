@@ -1,7 +1,7 @@
 const oracledb = require("oracledb");
 
 try {
-	oracledb.initOracleClient({ libDir: "C:\\oracle\\instantclient_19_27" });
+	oracledb.initOracleClient({ libDir: process.env.ORACLE_CLIENT_PATH });
 	console.log("Oracle client initialized successfully");
 } catch (err) {
 	console.error("Oracle client initialization failed:", err);
