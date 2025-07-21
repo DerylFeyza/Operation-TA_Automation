@@ -23,12 +23,8 @@ export const evaluateRow = async (
 			const lValue = String(columnL || "");
 			const zValue = String(columnZ || "");
 
-			if (
-				aValue !== qValue &&
-				xValue != "aktif" &&
-				yValue != "active" &&
-				aaValue === 0
-			) {
+			if (aValue !== qValue && xValue != "aktif" && yValue != "active") {
+				//lowk still doubt myself on ts, ask what to do if NTE > 0 and has no access
 				validationSheet.getCell(`R${rowNumber}`).value = "DELETE ROW";
 			}
 
