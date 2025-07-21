@@ -146,9 +146,6 @@ export const validateLaborReject = (
 			Array<{
 				rowNumber: number;
 				hasAccess: boolean;
-				mytechStatus: string;
-				scmtStatus: string;
-				nteCount: number;
 				columnQ: string;
 			}>
 		>();
@@ -179,9 +176,6 @@ export const validateLaborReject = (
 			nikGroups.get(nikValue)?.push({
 				rowNumber,
 				hasAccess,
-				mytechStatus,
-				scmtStatus,
-				nteCount,
 				columnQ: qValue,
 			});
 		});

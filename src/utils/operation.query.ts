@@ -14,7 +14,6 @@ export async function getAksesSCMT(laborList: string[] = []) {
 
 		const sql = `SELECT * FROM teknisi_scmt@scmt_dblink WHERE TECHNICIAN_CODE IN (${placeholders})`;
 		const result = await executeQuery(sql, laborList);
-		console.log("getAksesSCMT result:", result);
 		return result;
 	} catch (error) {
 		throw error;

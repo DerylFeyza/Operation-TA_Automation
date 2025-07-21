@@ -99,8 +99,6 @@ WHERE me.status_naker IN (1,4) AND om.level_idx<>'10'
 ) AS teknisi WHERE teknisi.nik IN (${placeholders})`,
 		nikList
 	);
-
-	console.log(rows);
 	return rows as TeknisiType[];
 }
 
