@@ -182,15 +182,20 @@ export const validateLaborReject = (
 
 		for (const [nikValue, rowsData] of nikGroups) {
 			const hasAnyAccess = rowsData.some((row) => row.hasAccess);
-
 			if (hasAnyAccess) {
+				const accessColumnQs = rowsData
+					.filter((row) => row.hasAccess)
+					.map((row) => row.columnQ)
+					.join(", ");
+
 				rowsData.forEach((rowData) => {
 					if (nikValue === rowData.columnQ && !rowData.hasAccess) {
 						validationSheet.getCell(`R${rowData.rowNumber}`).value = "REJECT";
 						validationSheet.getCell(`T${rowData.rowNumber}`).value =
 							"DONE(REJECT)";
-						validationSheet.getCell(`U${rowData.rowNumber}`).value =
-							"Masih Membawa NTE";
+						validationSheet.getCell(
+							`U${rowData.rowNumber}`
+						).value = `Masih Membawa NTE Pada Labor ${accessColumnQs}`;
 					}
 				});
 			}
