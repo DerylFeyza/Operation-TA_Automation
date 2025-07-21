@@ -137,7 +137,6 @@ export const automate = async (filePath: string) => {
 		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber >= 2) {
 				let cellValue = row.getCell(17).value;
-				// Convert to string if not already a string and not null/undefined
 				if (
 					cellValue !== null &&
 					cellValue !== undefined &&

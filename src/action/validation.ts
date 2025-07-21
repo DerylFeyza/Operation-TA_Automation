@@ -3,8 +3,6 @@ import { AksesMytechType, NIKLamaType } from "../types/teknisi";
 import { getAksesTele } from "../utils/operation.query";
 import { cekNIKLama } from "../utils/naker.query";
 import {
-	initializeValidationSheet,
-	initializeQuerySheet,
 	initializeNIKLama1Sheet,
 	initializeNIKLama2Sheet,
 	initializeMyTechSheet,
@@ -151,8 +149,8 @@ export const validateOldNIK = async (
 		const nikLama1ColumnBValues: any[] = [];
 		nikLama1Sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber >= 2) {
-				const cellValueA = row.getCell(1).value; // Column A
-				const cellValueB = row.getCell(2).value; // Column B
+				const cellValueA = row.getCell(1).value;
+				const cellValueB = row.getCell(2).value;
 				nikLama1ColumnAValues.push(cellValueA);
 				nikLama1ColumnBValues.push(cellValueB);
 			}
