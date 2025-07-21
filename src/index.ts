@@ -1,28 +1,15 @@
 const express = require("express");
 import dotenv from "dotenv";
 dotenv.config();
-import OracleDB from "oracledb";
 import multer from "multer";
 import { automate } from "./action/automate";
-import ExcelJS from "exceljs";
 import { getTeknisi } from "./utils/naker.query";
 import { getAksesSCMT } from "./utils/operation.query";
 import type { Request, Response } from "express";
 import fs from "fs";
 
 const app = express();
-const PORT = 3000;
 const upload = multer({ dest: "uploads/" });
-
-app.get("/automate", async (req: Request, res: Response) => {
-	const result = await getTeknisi();
-	res.send(result);
-});
-
-app.get("/akses-scmt", async (req: Request, res: Response) => {
-	const result = await getAksesSCMT();
-	res.send(result);
-});
 
 app.post(
 	"/upload",
@@ -53,6 +40,6 @@ app.post(
 	}
 );
 
-app.listen(PORT, () => {
-	console.log(`Server running on http://localhost:${PORT}`);
+app.listen(process.env.PORT || 3003, () => {
+	console.log(`Server running on http://localhost:${process.env.PORT || 3003}`);
 });
