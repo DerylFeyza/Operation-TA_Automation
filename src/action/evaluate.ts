@@ -8,6 +8,9 @@ export const evaluateRow = async (
 		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber === 1) return;
 			const columnA = row.getCell("A").value;
+			const columnH = row.getCell("H").value;
+
+			const columnI = row.getCell("I").value;
 			const columnL = row.getCell("L").value;
 			const columnQ = row.getCell("Q").value;
 			const columnX = row.getCell("X").value;
@@ -16,6 +19,8 @@ export const evaluateRow = async (
 			const columnAA = row.getCell("AA").value;
 
 			const aValue = String(columnA || "");
+			const hValue = String(columnH || "");
+			const IValue = String(columnI || "");
 			const qValue = String(columnQ || "");
 			const xValue = String(columnX || "");
 			const yValue = String(columnY || "");
@@ -24,7 +29,6 @@ export const evaluateRow = async (
 			const zValue = String(columnZ || "");
 
 			if (aValue !== qValue && xValue != "aktif" && yValue != "active") {
-				//lowk still doubt myself on ts, ask what to do if NTE > 0 and has no access
 				validationSheet.getCell(`R${rowNumber}`).value = "DELETE ROW";
 			}
 
@@ -34,6 +38,36 @@ export const evaluateRow = async (
 				aaValue === 0
 			) {
 				validationSheet.getCell(`R${rowNumber}`).value = "TERMINATE USER";
+			}
+
+			if (!hValue) {
+				validationSheet.getCell(`R${rowNumber}`).value = "REJECT";
+				validationSheet.getCell(`T${rowNumber}`).value = "DONE(REJECT)";
+				validationSheet.getCell(`U${rowNumber}`).value = "ID TELE KOSONG";
+			}
+
+			if (IValue == "NON ACTIVE") {
+				if (xValue === "aktif" || yValue === "active") {
+					validationSheet.getCell(`R${rowNumber}`).value = "TERMINATE USER";
+					validationSheet.getCell(`T${rowNumber}`).value = "";
+					validationSheet.getCell(`U${rowNumber}`).value = "RESIGN";
+				} else {
+					validationSheet.getCell(`R${rowNumber}`).value = "REJECT";
+					validationSheet.getCell(`T${rowNumber}`).value = "DONE(REJECT)";
+					validationSheet.getCell(`U${rowNumber}`).value = "RESIGN";
+				}
+			}
+
+			if (IValue == "BUKAN TEKNISI") {
+				if (xValue === "aktif" || yValue === "active") {
+					validationSheet.getCell(`R${rowNumber}`).value = "TERMINATE USER";
+					validationSheet.getCell(`T${rowNumber}`).value = "";
+					validationSheet.getCell(`U${rowNumber}`).value = "BUKAN TEKNISI";
+				} else {
+					validationSheet.getCell(`R${rowNumber}`).value = "REJECT";
+					validationSheet.getCell(`T${rowNumber}`).value = "DONE(REJECT)";
+					validationSheet.getCell(`U${rowNumber}`).value = "BUKAN TEKNISI";
+				}
 			}
 
 			const updatedRValue = String(
