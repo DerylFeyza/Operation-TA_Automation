@@ -46,3 +46,12 @@ export interface AksesSCMTType {
 	TIME_STAMP: Date;
 	TECHNICIAN_CODE_REF: string;
 }
+
+export interface AksesValidation {
+	labor: string;
+	mytech: string;
+	scmt: string;
+	nte: number;
+	reject?: boolean;
+	action?: string;
+}

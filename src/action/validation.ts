@@ -1,12 +1,16 @@
 import ExcelJS from "exceljs";
-import { AksesMytechType, NIKLamaType } from "../types/teknisi";
-import { getAksesTele } from "../utils/operation.query";
-import { cekNIKLama } from "../utils/naker.query";
 import {
-	initializeNIKLama1Sheet,
-	initializeNIKLama2Sheet,
-	initializeMyTechSheet,
-} from "./sheets";
+	AksesMytechType,
+	NIKLamaType,
+	AksesValidation,
+} from "../types/teknisi";
+import {
+	getAksesTele,
+	getAksesMyTech,
+	getAksesSCMT,
+} from "../utils/operation.query";
+import { cekNIKLama } from "../utils/naker.query";
+import { initializeNIKLamaSheet, initializeMyTechSheet } from "./sheets";
 
 export const validateTeleAccess = async (
 	workbook: ExcelJS.Workbook,
@@ -108,12 +112,17 @@ export const validateTeleAccess = async (
 
 			// Get values from akses_tele sheet
 			const aksesTeleValues: { accountId: any; nik: any }[] = [];
+			const seenAccountIds = new Set();
 			aksesTeleSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 				if (rowNumber >= 2) {
-					aksesTeleValues.push({
-						accountId: row.getCell(3).value, // Column C (ACCOUNT_ID)
-						nik: row.getCell(11).value, // Column K (NIK)
-					});
+					const accountId = row.getCell(3).value;
+					if (!seenAccountIds.has(String(accountId))) {
+						seenAccountIds.add(String(accountId));
+						aksesTeleValues.push({
+							accountId: accountId,
+							nik: row.getCell(11).value,
+						});
+					}
 				}
 			});
 
@@ -135,19 +144,19 @@ export const validateOldNIK = async (
 	//cek NIK lama
 	const nikLama1Data = await cekNIKLama(querySheetColumnAValues);
 	if (nikLama1Data.length > 0) {
-		const nikLama1Sheet = await initializeNIKLama1Sheet(workbook);
+		const nikLamaSheet = await initializeNIKLamaSheet(workbook);
 		const nikLama1Rows = Array.isArray(nikLama1Data)
 			? nikLama1Data
 			: nikLama1Data[0] || [];
 
 		nikLama1Rows.forEach((row: NIKLamaType) => {
-			nikLama1Sheet.addRow([Number(row.nik_baru), Number(row.nik_lama)]);
+			nikLamaSheet.addRow([Number(row.nik_baru), Number(row.nik_lama)]);
 		});
 
 		//create labor from nik lama 1
 		const nikLama1ColumnAValues: any[] = [];
 		const nikLama1ColumnBValues: any[] = [];
-		nikLama1Sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+		nikLamaSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber >= 2) {
 				const cellValueA = row.getCell(1).value;
 				const cellValueB = row.getCell(2).value;
@@ -165,46 +174,81 @@ export const validateOldNIK = async (
 			validationSheet.getCell(`Q${targetRow}`).value = valueB;
 		});
 
-		//check nik lama 2
-		const nikLama2Data = await cekNIKLama(nikLama1ColumnBValues);
-		if (nikLama2Data.length > 0) {
-			const nikLama2Sheet = await initializeNIKLama2Sheet(workbook);
-			const nikLama2Rows = Array.isArray(nikLama2Data)
-				? nikLama2Data
-				: nikLama2Data[0] || [];
+		let lastFilledCol = nikLamaSheet.columnCount;
+		let nikterlamaVal: any[] = [];
+		nikLamaSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+			if (rowNumber >= 2) {
+				const cellValue = row.getCell(lastFilledCol).value;
+				nikterlamaVal.push(cellValue);
+			}
+		});
 
-			nikLama2Rows.forEach((row: NIKLamaType) => {
-				const matchIndex = nikLama1ColumnBValues.findIndex(
-					(val) => Number(val) === Number(row.nik_baru)
-				);
-				const calculatedValue =
-					matchIndex !== -1 ? nikLama1ColumnAValues[matchIndex] : null;
-				nikLama2Sheet.addRow([
-					calculatedValue,
-					Number(row.nik_baru),
-					Number(row.nik_lama),
-				]);
-			});
+		let nikLamaData = await cekNIKLama(nikterlamaVal);
 
-			//create labor from nik lama 2
-			const nikLama2ColumnAValues: any[] = [];
-			const nikLama2ColumnCValues: any[] = [];
-			nikLama2Sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+		while (nikLamaData.length > 0) {
+			const headerRow = nikLamaSheet.getRow(1);
+			let firstEmptyCol = 1;
+			while (
+				headerRow.getCell(firstEmptyCol).value !== null &&
+				headerRow.getCell(firstEmptyCol).value !== undefined
+			) {
+				firstEmptyCol++;
+			}
+			headerRow.getCell(firstEmptyCol).value = `nik ${firstEmptyCol}`;
+			if (nikLamaData.length > 0) {
+				const nikLama2Rows = Array.isArray(nikLamaData)
+					? nikLamaData
+					: nikLamaData[0] || [];
+
+				nikLama2Rows.forEach((row: NIKLamaType) => {
+					const nikBaru = Number(row.nik_baru);
+					const nikLama = Number(row.nik_lama);
+
+					nikLamaSheet.eachRow(
+						{ includeEmpty: false },
+						(sheetRow, rowNumber) => {
+							if (rowNumber >= 2) {
+								const lastColValue = sheetRow.getCell(lastFilledCol).value;
+								if (Number(lastColValue) === nikBaru) {
+									sheetRow.getCell(firstEmptyCol).value = nikLama;
+								}
+							}
+						}
+					);
+				});
+
+				const nikLamaVal: any[] = [];
+				const nikbaruVal: any[] = [];
+				nikLamaSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+					if (rowNumber >= 2) {
+						const nikLamaCol = row.getCell(firstEmptyCol).value;
+						if (nikLamaCol !== null && nikLamaCol !== undefined) {
+							const nikBaruCol = row.getCell(1).value;
+							nikLamaVal.push(nikLamaCol);
+							nikbaruVal.push(nikBaruCol);
+						}
+					}
+				});
+
+				const startRow2 = validationSheet.actualRowCount + 1;
+				nikLamaVal.forEach((nikLama, index) => {
+					const targetRow = startRow2 + index;
+					const nikBaru = nikbaruVal[index];
+					validationSheet.getCell(`A${targetRow}`).value = nikBaru;
+					validationSheet.getCell(`Q${targetRow}`).value = nikLama;
+				});
+			}
+			lastFilledCol = nikLamaSheet.columnCount;
+			nikterlamaVal = [];
+			nikLamaSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 				if (rowNumber >= 2) {
-					const cellValueA = row.getCell(1).value;
-					const cellValueC = row.getCell(3).value;
-					nikLama2ColumnAValues.push(cellValueA);
-					nikLama2ColumnCValues.push(cellValueC);
+					const cellValue = row.getCell(lastFilledCol).value;
+					if (cellValue !== null && cellValue !== undefined) {
+						nikterlamaVal.push(cellValue);
+					}
 				}
 			});
-
-			const startRow2 = validationSheet.actualRowCount + 1;
-			nikLama2ColumnAValues.forEach((valueA, index) => {
-				const targetRow = startRow2 + index;
-				const valueC = nikLama2ColumnCValues[index];
-				validationSheet.getCell(`A${targetRow}`).value = valueA;
-				validationSheet.getCell(`Q${targetRow}`).value = valueC;
-			});
+			nikLamaData = await cekNIKLama(nikterlamaVal);
 		}
 	}
 };
@@ -366,5 +410,85 @@ export const translateWHParadise = async (
 	} catch (error) {
 		console.error("Error reading scmt-paradise.xlsx:", error);
 		return null;
+	}
+};
+
+export const getAllUserLabor = async (
+	NIK: string,
+	idtele: string
+): Promise<AksesValidation[]> => {
+	let laborlist: string[] = [NIK];
+
+	try {
+		let i = 1;
+		while (laborlist.length == i) {
+			const lastNIK = laborlist[laborlist.length - 1];
+			const nikLamaData = await cekNIKLama([lastNIK]);
+			if (nikLamaData.length > 0) {
+				nikLamaData.forEach((item) => {
+					laborlist.push(String(item.nik_lama));
+				});
+			}
+			i++;
+		}
+
+		const aksesTele = await getAksesTele([idtele]);
+		if (aksesTele.length > 0) {
+			if (aksesTele.length > 0) {
+				aksesTele.forEach((item) => {
+					const accountId = String(item.ACCOUNT_ID);
+					if (!laborlist.includes(accountId)) {
+						laborlist.push(accountId);
+					}
+				});
+			}
+		}
+
+		const validationArray: AksesValidation[] = [];
+		const aksesMytech = await getAksesMyTech(laborlist);
+		const aksesSCMT = await getAksesSCMT(laborlist);
+		laborlist.forEach((labor) => {
+			const mytechMatch = aksesMytech.find(
+				(item) => String(item.ACCOUNT_ID) === labor
+			);
+			const scmtMatch = aksesSCMT.find(
+				(item) => String(item.TECHNICIAN_CODE) === labor
+			);
+
+			const mytechStatus = (mytechMatch?.STATUS_USER || "").trim();
+			const scmtStatus = (scmtMatch?.TECHNICIAN_STATUS || "").trim();
+			const totalNTE = scmtMatch?.TOTAL_NTE ? Number(scmtMatch.TOTAL_NTE) : 0;
+
+			let reject = false;
+			let action = "";
+
+			if (labor === NIK) {
+				reject = false;
+				action = "NIK Baru";
+			} else if (
+				(mytechStatus === "aktif" || scmtStatus === "active") &&
+				totalNTE === 0
+			) {
+				reject = true;
+				action = `TERMINATE Labor sebelum create user`;
+			} else if (totalNTE > 0) {
+				reject = true;
+				action = `REJECT, membawa NTE`;
+			}
+
+			const validationObj: AksesValidation = {
+				labor,
+				mytech: mytechMatch ? String(mytechMatch.STATUS_USER || "") : "",
+				scmt: scmtMatch ? String(scmtMatch.TECHNICIAN_STATUS || "") : "",
+				nte: totalNTE,
+				reject,
+				action,
+			};
+			validationArray.push(validationObj);
+		});
+
+		return validationArray;
+	} catch (error) {
+		console.error("Error fetching from db", error);
 	}
 };

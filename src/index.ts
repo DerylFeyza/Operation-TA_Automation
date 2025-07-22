@@ -4,8 +4,9 @@ dotenv.config();
 import multer from "multer";
 import { automate } from "./action/automate";
 import { getTeknisi } from "./utils/naker.query";
-import { getAksesSCMT } from "./utils/operation.query";
 import type { Request, Response } from "express";
+import { getAllUserLabor } from "./action/validation";
+import { TeknisiType } from "./types/teknisi";
 import fs from "fs";
 
 const app = express();
@@ -43,6 +44,47 @@ app.post(
 		}
 	}
 );
+
+app.get("/cek-allow/:id", async (req: Request, res: Response) => {
+	try {
+		const id = req.params.id;
+		const teknisiData = await getTeknisi(id ? [id] : []);
+		if (teknisiData.length == 0) {
+			return res.status(404).send("Teknisi Not Found");
+		}
+		let allow = true;
+
+		if (!teknisiData[0].id_telegram) {
+			return res.status(400).json({
+				allow: false,
+				message: "Tidak Memiliki ID Telegram di DB Naker",
+				data: teknisiData,
+			});
+		}
+
+		const laborAccess = await getAllUserLabor(id, teknisiData[0].id_telegram);
+		if (laborAccess.length === 0) {
+			return res.status(400).json({
+				allow: true,
+				message: "Tidak Memiliki Akses Labor Di NIK Lama",
+				data: teknisiData,
+			});
+		}
+
+		const hasRejections = laborAccess.some((access) => access.reject === true);
+		if (hasRejections) {
+			allow = false;
+		}
+		return res.json({
+			allow: allow,
+			data: teknisiData,
+			laborAccess: laborAccess,
+		});
+	} catch (err) {
+		console.error(err);
+		res.status(500).send("Error fetching teknisi data");
+	}
+});
 
 app.listen(process.env.PORT || 3003, () => {
 	console.log(`Server running on http://localhost:${process.env.PORT || 3003}`);

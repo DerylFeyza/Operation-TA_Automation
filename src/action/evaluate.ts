@@ -200,8 +200,10 @@ export const validateLaborReject = (
 			const scmtStatus = String(columnY || "");
 			const nteCount = Number(columnAA) || 0;
 
-			const hasAccess =
-				(mytechStatus === "aktif" || scmtStatus === "active") && nteCount > 0;
+			// const hasAccess =
+			// 	(mytechStatus === "aktif" || scmtStatus === "active") && nteCount > 0;
+
+			const hasAccess = nteCount > 0;
 
 			if (!nikGroups.has(nikValue)) {
 				nikGroups.set(nikValue, []);
@@ -214,6 +216,7 @@ export const validateLaborReject = (
 			});
 		});
 
+		//TODO: IGNORE REQUEST jika punya NTE di labor lama
 		for (const [nikValue, rowsData] of nikGroups) {
 			const hasAnyAccess = rowsData.some((row) => row.hasAccess);
 			if (hasAnyAccess) {

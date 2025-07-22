@@ -105,6 +105,9 @@ WHERE me.status_naker IN (1,4) AND om.level_idx<>'10'
 export async function cekNIKLama(
 	nikList: string[] = []
 ): Promise<NIKLamaType[]> {
+	if (nikList.length === 0) {
+		return [];
+	}
 	const placeholders = nikList.map(() => "?").join(",");
 	const [rows] = await mysql.query(
 		`select nik_baru,nik_lama from naker.history_nik hn where nik_baru in (${placeholders})`,
