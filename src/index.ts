@@ -1,4 +1,5 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 import dotenv from "dotenv";
 dotenv.config();
 import multer from "multer";
@@ -6,11 +7,13 @@ import { automate } from "./action/automate";
 import { getTeknisi } from "./utils/naker.query";
 import type { Request, Response } from "express";
 import { getAllUserLabor } from "./action/validation";
-import { TeknisiType } from "./types/teknisi";
+import { trackUser } from "./utils/idmt/api";
 import fs from "fs";
 
 const app = express();
 const upload = multer({ dest: "uploads/" });
+app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (req: Request, res: Response) => {
 	res.send("NDE Format Automation API by deryl");
@@ -45,6 +48,35 @@ app.post(
 	}
 );
 
+app.post("/technician/track", async (req: Request, res: Response) => {
+	try {
+		const adminCookie = req.cookies.idmt_admin;
+		const { nik, output } = req.body;
+
+		if (!nik) {
+			return res.status(400).json({ error: "NIK is required" });
+		}
+
+		const trackedData = await Promise.all(
+			nik.map((singleNik: string) => trackUser(singleNik, adminCookie))
+		);
+
+		if (output === "csv") {
+			const { Parser } = require("json2csv");
+			const json2csvParser = new Parser();
+			const csv = json2csvParser.parse(trackedData);
+			res.header("Content-Type", "text/csv");
+			res.attachment("tracked_data.csv");
+			return res.send(csv);
+		}
+
+		return res.json(trackedData);
+	} catch (err) {
+		console.error(err);
+		res.status(500).send("Error tracking person file");
+	}
+});
+
 app.get("/cek-allow/:id", async (req: Request, res: Response) => {
 	try {
 		const id = req.params.id;
@@ -54,13 +86,13 @@ app.get("/cek-allow/:id", async (req: Request, res: Response) => {
 		}
 		let allow = true;
 
-		if (!teknisiData[0].id_telegram) {
-			return res.status(400).json({
-				allow: false,
-				message: "Tidak Memiliki ID Telegram di DB Naker",
-				data: teknisiData,
-			});
-		}
+		// if (!teknisiData[0].id_telegram) {
+		// 	return res.status(400).json({
+		// 		allow: false,
+		// 		message: "Tidak Memiliki ID Telegram di DB Naker",
+		// 		data: teknisiData,
+		// 	});
+		// }
 
 		const laborAccess = await getAllUserLabor(id, teknisiData[0].id_telegram);
 		if (laborAccess.length === 0) {
