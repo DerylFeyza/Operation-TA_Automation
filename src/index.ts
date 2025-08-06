@@ -7,7 +7,13 @@ import { automate } from "./action/automate";
 import { getTeknisi } from "./utils/naker.query";
 import type { Request, Response } from "express";
 import { getAllUserLabor } from "./action/validation";
-import { trackUser } from "./utils/idmt/api";
+import {
+	trackUser,
+	checkApprovalExist,
+	checkPersonId,
+	getTechnicianWarehouse,
+	approveTeknisi,
+} from "./utils/idmt/api";
 import fs from "fs";
 
 const app = express();
@@ -71,6 +77,161 @@ app.post("/technician/track", async (req: Request, res: Response) => {
 		}
 
 		return res.json(trackedData);
+	} catch (err) {
+		console.error(err);
+		res.status(500).send("Error tracking person file");
+	}
+});
+
+app.post("/technician/warehouse", async (req: Request, res: Response) => {
+	try {
+		const adminCookie = req.cookies.idmt_admin;
+		const { labor, output } = req.body;
+
+		if (!labor) {
+			return res.status(400).json({ error: "Labor is required" });
+		}
+
+		const trackedData = await Promise.all(
+			labor.map((singleLabor: string) =>
+				checkPersonId(singleLabor, adminCookie)
+			)
+		);
+
+		const trackedWarehouseData = await Promise.all(
+			trackedData.map((data) =>
+				getTechnicianWarehouse(data.labor, data.personId, adminCookie)
+			)
+		);
+
+		if (output === "csv") {
+			const { Parser } = require("json2csv");
+			const json2csvParser = new Parser();
+			const csv = json2csvParser.parse(trackedWarehouseData);
+			res.header("Content-Type", "text/csv");
+			res.attachment("tracked_warehouse.csv");
+			return res.send(csv);
+		}
+
+		return res.json(trackedWarehouseData);
+	} catch (err) {
+		console.error(err);
+		res.status(500).send("Error tracking person file");
+	}
+});
+
+app.post("/admin/approval/list", async (req: Request, res: Response) => {
+	try {
+		const adminCookie = req.cookies.idmt_admin;
+		const { labor } = req.body;
+
+		if (!labor) {
+			return res.status(400).json({ error: "Labor is required" });
+		}
+
+		const trackedData = await Promise.all(
+			labor.map((singleLabor: string) =>
+				checkApprovalExist(singleLabor, adminCookie)
+			)
+		);
+
+		return res.json(trackedData);
+	} catch (err) {
+		console.error(err);
+		res.status(500).send("Error tracking person file");
+	}
+});
+
+app.post("/superadmin/approval/list", async (req: Request, res: Response) => {
+	try {
+		const superAdminCookie = req.cookies.idmt_superadmin;
+		const { labor } = req.body;
+
+		if (!labor) {
+			return res.status(400).json({ error: "Labor is required" });
+		}
+
+		const trackedData = await Promise.all(
+			labor.map((singleLabor: string) =>
+				checkApprovalExist(singleLabor, superAdminCookie)
+			)
+		);
+
+		return res.json(trackedData);
+	} catch (err) {
+		console.error(err);
+		res.status(500).send("Error tracking person file");
+	}
+});
+
+app.post("/superadmin/approve", async (req: Request, res: Response) => {
+	try {
+		const superAdminCookie = req.cookies.idmt_superadmin;
+		const { labor, output } = req.body;
+
+		if (!labor) {
+			return res.status(400).json({ error: "Labor is required" });
+		}
+
+		const personIdMapping = await Promise.all(
+			labor.map((singleLabor: string) =>
+				checkPersonId(singleLabor, superAdminCookie)
+			)
+		);
+
+		const approveResult = await Promise.all(
+			personIdMapping.map((data) =>
+				approveTeknisi(data.labor, data.personId, superAdminCookie)
+			)
+		);
+
+		if (output === "csv") {
+			const { Parser } = require("json2csv");
+			const json2csvParser = new Parser();
+			const csv = json2csvParser.parse(approveResult);
+			res.header("Content-Type", "text/csv");
+			res.attachment("approve_result_mbaeva.csv");
+			return res.send(csv);
+		}
+
+		return res.json(approveResult);
+	} catch (err) {
+		console.error(err);
+		res.status(500).send("Error tracking person file");
+	}
+});
+
+app.post("/admin/approve", async (req: Request, res: Response) => {
+	try {
+		const adminCookie = req.cookies.idmt_admin;
+		const { labor, output } = req.body;
+
+		if (!labor) {
+			return res.status(400).json({ error: "Labor is required" });
+		}
+
+		const personIdMapping = await Promise.all(
+			labor.map((singleLabor: string) =>
+				checkPersonId(singleLabor, adminCookie)
+			)
+		);
+
+		const approveResult = await Promise.all(
+			personIdMapping.map((data) =>
+				approveTeknisi(data.labor, data.personId, adminCookie)
+			)
+		);
+
+		if (output === "csv") {
+			const { Parser } = require("json2csv");
+			const json2csvParser = new Parser();
+			const csv = json2csvParser.parse(approveResult);
+			res.header("Content-Type", "text/csv");
+			res.attachment("approve_result_masruli.csv");
+			return res.send(csv);
+		}
+
+		return res.json(approveResult);
 	} catch (err) {
 		console.error(err);
 		res.status(500).send("Error tracking person file");
