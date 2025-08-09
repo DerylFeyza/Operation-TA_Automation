@@ -49,11 +49,11 @@ export const validateTeleAccess = async (
 			]);
 		});
 
-		const validationQValues: any[] = [];
+		const validationLabor: any[] = [];
 		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber >= 2) {
-				const cellValue = row.getCell("Q").value;
-				validationQValues.push(cellValue);
+				const cellValue = row.getCell("R").value;
+				validationLabor.push(cellValue);
 			}
 		});
 
@@ -61,7 +61,7 @@ export const validateTeleAccess = async (
 		aksesTeleSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber >= 2) {
 				const cellValue = row.getCell("C").value;
-				const exists = validationQValues.some(
+				const exists = validationLabor.some(
 					(value) => Number(value) === Number(cellValue)
 				);
 				if (exists) {
@@ -128,7 +128,7 @@ export const validateTeleAccess = async (
 
 			aksesTeleValues.forEach((value, index) => {
 				const targetRow = firstEmptyRow + index;
-				validationSheet.getCell(`Q${targetRow}`).value = value.accountId;
+				validationSheet.getCell(`R${targetRow}`).value = value.accountId;
 				validationSheet.getCell(`A${targetRow}`).value = value.nik;
 			});
 		}
@@ -171,7 +171,7 @@ export const validateOldNIK = async (
 			const valueB = nikLama1ColumnBValues[index];
 
 			validationSheet.getCell(`A${targetRow}`).value = valueA;
-			validationSheet.getCell(`Q${targetRow}`).value = valueB;
+			validationSheet.getCell(`R${targetRow}`).value = valueB;
 		});
 
 		let lastFilledCol = nikLamaSheet.columnCount;
@@ -235,7 +235,7 @@ export const validateOldNIK = async (
 					const targetRow = startRow2 + index;
 					const nikBaru = nikbaruVal[index];
 					validationSheet.getCell(`A${targetRow}`).value = nikBaru;
-					validationSheet.getCell(`Q${targetRow}`).value = nikLama;
+					validationSheet.getCell(`R${targetRow}`).value = nikLama;
 				});
 			}
 			lastFilledCol = nikLamaSheet.columnCount;
@@ -392,14 +392,14 @@ export const translateWHParadise = async (
 
 		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber > 1) {
-				const cellLValue = String(row.getCell("L").value || "");
+				const cellWHParadise = String(row.getCell("M").value || "");
 				for (const [dimension, code] of dimensionToCodeMap.entries()) {
-					if (cellLValue.includes(dimension)) {
-						const updatedValue = cellLValue.replace(
+					if (cellWHParadise.includes(dimension)) {
+						const updatedValue = cellWHParadise.replace(
 							dimension,
 							`${dimension}(${code})`
 						);
-						row.getCell("L").value = updatedValue;
+						row.getCell("M").value = updatedValue;
 						break;
 					}
 				}

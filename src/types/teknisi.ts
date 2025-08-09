@@ -1,3 +1,5 @@
+import { CellValue } from "exceljs";
+
 export interface TeknisiType {
 	nik: string;
 	name: string;
@@ -54,4 +56,16 @@ export interface AksesValidation {
 	nte: number;
 	reject?: boolean;
 	action?: string;
+}
+
+export interface sourceSheetType {
+	nik: CellValue;
+	sto: CellValue;
+	ccan: CellValue;
+	inv: CellValue;
+	nde: CellValue;
+	nikpengirim: CellValue;
+	pengirim: CellValue;
+	tglnde: CellValue;
+	request: CellValue;
 }

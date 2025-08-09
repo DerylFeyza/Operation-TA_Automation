@@ -54,6 +54,35 @@ app.post(
 	}
 );
 
+app.post(
+	"/postprocess",
+	upload.single("sheet"),
+	async (req: Request, res: Response) => {
+		try {
+			const filePath = req?.file?.path;
+			if (!filePath) return res.status(400).send("No file uploaded");
+
+			const processedWorkbook = await automate(filePath);
+			res.setHeader(
+				"Content-Disposition",
+				"attachment; filename=processed.xlsx"
+			);
+			res.setHeader(
+				"Content-Type",
+				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+			);
+
+			await processedWorkbook.xlsx.write(res);
+			res.end();
+
+			fs.unlinkSync(filePath);
+		} catch (err) {
+			console.error(err);
+			res.status(500).send("Error processing Excel file");
+		}
+	}
+);
+
 app.post("/technician/track", async (req: Request, res: Response) => {
 	try {
 		const adminCookie = req.cookies.idmt_admin;

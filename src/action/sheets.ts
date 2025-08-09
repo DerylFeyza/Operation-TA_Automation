@@ -12,7 +12,8 @@ export const initializeValidationSheet = async (workbook: any) => {
 		"Position Name",
 		"Craft Akses",
 		"sto id",
-		"request wh code",
+		"REQ WH SCMT",
+		"REQ WH PARADISE",
 		"NDE",
 		"pengirim",
 		"nama_pengirim",
@@ -29,6 +30,11 @@ export const initializeValidationSheet = async (workbook: any) => {
 		"WH_CODE_USER",
 		"NTE",
 		"USER_REQUEST",
+		"SCMT ACTIVATE FORMAT",
+		"SCMT ADD WH FORMAT",
+		"UNGGAH TEKNISI FORMAT",
+		"DEACTIVATE FORMAT",
+		"ACTIVATE FORMAT",
 	];
 	validationSheet.addRow(validationHeaders);
 	return validationSheet;
@@ -58,13 +64,6 @@ export const initializeNIKLamaSheet = async (workbook: any) => {
 	nikLama1Sheet.addRow(nikLama1Headers);
 	return nikLama1Sheet;
 };
-
-// export const initializeNIKLama2Sheet = async (workbook: any) => {
-// 	const nikLama2Sheet = workbook.addWorksheet("niklama2");
-// 	const nikLama2Headers = ["nik baru", "nik lama", "nik lama 2"];
-// 	nikLama2Sheet.addRow(nikLama2Headers);
-// 	return nikLama2Sheet;
-// };
 
 export const initializeMyTechSheet = async (workbook: any, sheet: string) => {
 	const myTechSheet = workbook.addWorksheet(sheet);

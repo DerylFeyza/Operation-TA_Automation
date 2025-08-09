@@ -6,7 +6,12 @@ import {
 	initializeMyTechSheet,
 	initializeSCMTSheet,
 } from "./sheets";
-import { TeknisiType, NIKLamaType, AksesMytechType } from "../types/teknisi";
+import {
+	TeknisiType,
+	NIKLamaType,
+	AksesMytechType,
+	sourceSheetType,
+} from "../types/teknisi";
 import { getAksesMyTech, getAksesSCMT } from "../utils/operation.query";
 import {
 	validateTeleAccess,
@@ -36,18 +41,19 @@ export const automate = async (filePath: string) => {
 			}
 		});
 
-		const sourceData: any[] = [];
+		const sourceData: sourceSheetType[] = [];
 		sourceSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber >= 2) {
 				sourceData.push({
 					nik: row.getCell(1).value,
-					col2: row.getCell(2).value,
-					col3: row.getCell(3).value,
-					col4: row.getCell(4).value,
-					col5: row.getCell(5).value,
-					col6: row.getCell(6).value,
-					col7: row.getCell(7).value,
-					col8: row.getCell(8).value,
+					sto: row.getCell(2).value,
+					ccan: row.getCell(3).value,
+					inv: row.getCell(4).value,
+					nde: row.getCell(5).value,
+					nikpengirim: row.getCell(6).value,
+					pengirim: row.getCell(7).value,
+					tglnde: row.getCell(8).value,
+					request: row.getCell(9).value,
 				});
 			}
 		});
@@ -87,7 +93,7 @@ export const automate = async (filePath: string) => {
 		querySheetColumnAValues.forEach((value, index) => {
 			const targetRow = index + 2;
 			validationSheet.getCell(`A${targetRow}`).value = value;
-			validationSheet.getCell(`Q${targetRow}`).value = value;
+			validationSheet.getCell(`R${targetRow}`).value = value;
 		});
 
 		await validateOldNIK(
@@ -125,20 +131,22 @@ export const automate = async (filePath: string) => {
 			);
 
 			if (matchingSourceRow) {
-				validationSheet.getCell(`K${row}`).value = matchingSourceRow.col2;
-				validationSheet.getCell(`L${row}`).value = matchingSourceRow.col3;
-				validationSheet.getCell(`M${row}`).value = matchingSourceRow.col4;
-				validationSheet.getCell(`N${row}`).value = matchingSourceRow.col5;
-				validationSheet.getCell(`O${row}`).value = matchingSourceRow.col6;
-				validationSheet.getCell(`P${row}`).value = matchingSourceRow.col7;
-				validationSheet.getCell(`AB${row}`).value = matchingSourceRow.col8;
+				validationSheet.getCell(`K${row}`).value = matchingSourceRow.sto;
+				validationSheet.getCell(`L${row}`).value = matchingSourceRow.ccan;
+				validationSheet.getCell(`M${row}`).value = matchingSourceRow.inv;
+				validationSheet.getCell(`N${row}`).value = matchingSourceRow.nde;
+				validationSheet.getCell(`O${row}`).value =
+					matchingSourceRow.nikpengirim;
+				validationSheet.getCell(`P${row}`).value = matchingSourceRow.pengirim;
+				validationSheet.getCell(`Q${row}`).value = matchingSourceRow.tglnde;
+				validationSheet.getCell(`AB${row}`).value = matchingSourceRow.request;
 			}
 		}
 
 		const formatLabor: any[] = [];
 		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber >= 2) {
-				let cellValue = row.getCell(17).value;
+				let cellValue = row.getCell(18).value;
 				if (
 					cellValue !== null &&
 					cellValue !== undefined &&
@@ -205,7 +213,7 @@ export const automate = async (filePath: string) => {
 
 		const lastValidationRow = validationSheet.actualRowCount;
 		for (let row = 2; row <= lastValidationRow; row++) {
-			const lookupValue = validationSheet.getCell(`Q${row}`).value;
+			const lookupValue = validationSheet.getCell(`R${row}`).value;
 			let result = "-";
 			let scmtresult = "-";
 			let scmtwh = "-";
@@ -248,16 +256,33 @@ export const automate = async (filePath: string) => {
 				});
 			}
 
-			validationSheet.getCell(`X${row}`).value = result;
-			validationSheet.getCell(`Y${row}`).value = scmtresult;
-			validationSheet.getCell(`Z${row}`).value = scmtwh;
-			validationSheet.getCell(`AA${row}`).value = scmtnte;
+			validationSheet.getCell(`Y${row}`).value = result;
+			validationSheet.getCell(`Z${row}`).value = scmtresult;
+			validationSheet.getCell(`AA${row}`).value = scmtwh;
+			validationSheet.getCell(`AB${row}`).value = scmtnte;
 		}
 		await translateWHParadise(workbook, validationSheet);
 		await evaluateRow(validationSheet);
 		await highlightAndFormat(workbook, validationSheet);
 
 		return workbook;
+	} catch (error) {
+		console.error("Automation error:", error);
+		throw error;
+	}
+};
+
+export const postprocess = async (filePath: string) => {
+	try {
+		const workbook = new ExcelJS.Workbook();
+		workbook.calcProperties.fullCalcOnLoad = true;
+
+		await workbook.xlsx.readFile(filePath);
+
+		const sourceSheet = workbook.getWorksheet("validation");
+		if (!sourceSheet) {
+			throw new Error("validation sheet not found");
+		}
 	} catch (error) {
 		console.error("Automation error:", error);
 		throw error;

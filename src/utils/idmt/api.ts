@@ -124,7 +124,7 @@ export const getTechnicianWarehouse = async (
 ) => {
 	try {
 		if (personId === "-") {
-			return { labor: labor, personId: "-", warehouse: "-" };
+			return { labor: labor, personId: "-", warehouse_IDMT: "-" };
 		}
 		const api = `${IDMT_BASE}person/attribute/load-saved-attribute`;
 		const formData = new FormData();

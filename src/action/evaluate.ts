@@ -7,29 +7,31 @@ export const evaluateRow = async (
 		validateLaborReject(validationSheet);
 		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber === 1) return;
-			const columnA = row.getCell("A").value;
-			const columnH = row.getCell("H").value;
+			const columnNIK = row.getCell("A").value;
+			const columnIDTELE = row.getCell("H").value;
+			const columnPosition = row.getCell("I").value;
+			const columnREQWHSCMT = row.getCell("L").value;
+			const columnREQWHParadise = row.getCell("M").value;
 
-			const columnI = row.getCell("I").value;
-			const columnL = row.getCell("L").value;
-			const columnQ = row.getCell("Q").value;
-			const columnX = row.getCell("X").value;
-			const columnY = row.getCell("Y").value;
-			const columnZ = row.getCell("Z").value;
-			const columnAA = row.getCell("AA").value;
+			const columnLabor = row.getCell("R").value;
+			const columnMytech = row.getCell("Y").value;
+			const columnSCMT = row.getCell("Z").value;
+			const columnWHSCMT = row.getCell("AA").value;
+			const columnNTE = row.getCell("AB").value;
 
-			const aValue = String(columnA || "");
-			const hValue = String(columnH || "");
-			const IValue = String(columnI || "");
-			const qValue = String(columnQ || "");
-			const xValue = String(columnX || "");
-			const yValue = String(columnY || "");
-			const aaValue = Number(columnAA) || 0;
-			const lValue = String(columnL || "");
-			const zValue = String(columnZ || "");
+			const aValue = String(columnNIK || "");
+			const hValue = String(columnIDTELE || "");
+			const IValue = String(columnPosition || "");
+			const qValue = String(columnLabor || "");
+			const xValue = String(columnMytech || "");
+			const yValue = String(columnSCMT || "");
+			const aaValue = Number(columnNTE) || 0;
+			const lValue = String(columnREQWHSCMT || "");
+			const mValue = String(columnREQWHParadise || "");
+			const zValue = String(columnWHSCMT || "");
 
 			if (aValue !== qValue && xValue != "aktif" && yValue != "active") {
-				validationSheet.getCell(`R${rowNumber}`).value = "DELETE ROW";
+				validationSheet.getCell(`S${rowNumber}`).value = "DELETE ROW";
 			}
 
 			if (
@@ -37,41 +39,41 @@ export const evaluateRow = async (
 				(xValue === "aktif" || yValue === "active") &&
 				aaValue === 0
 			) {
-				validationSheet.getCell(`R${rowNumber}`).value = "TERMINATE USER";
+				validationSheet.getCell(`S${rowNumber}`).value = "TERMINATE USER";
 			}
 
 			if (!hValue) {
-				validationSheet.getCell(`R${rowNumber}`).value = "REJECT";
-				validationSheet.getCell(`T${rowNumber}`).value = "DONE(REJECT)";
-				validationSheet.getCell(`U${rowNumber}`).value = "ID TELE KOSONG";
+				validationSheet.getCell(`S${rowNumber}`).value = "REJECT";
+				validationSheet.getCell(`U${rowNumber}`).value = "DONE(REJECT)";
+				validationSheet.getCell(`V${rowNumber}`).value = "ID TELE KOSONG";
 			}
 
 			if (IValue == "NON ACTIVE") {
 				if (xValue === "aktif" || yValue === "active") {
-					validationSheet.getCell(`R${rowNumber}`).value = "TERMINATE USER";
-					validationSheet.getCell(`T${rowNumber}`).value = "";
-					validationSheet.getCell(`U${rowNumber}`).value = "RESIGN";
+					validationSheet.getCell(`S${rowNumber}`).value = "TERMINATE USER";
+					validationSheet.getCell(`U${rowNumber}`).value = "";
+					validationSheet.getCell(`V${rowNumber}`).value = "RESIGN";
 				} else {
-					validationSheet.getCell(`R${rowNumber}`).value = "REJECT";
-					validationSheet.getCell(`T${rowNumber}`).value = "DONE(REJECT)";
-					validationSheet.getCell(`U${rowNumber}`).value = "RESIGN";
+					validationSheet.getCell(`S${rowNumber}`).value = "REJECT";
+					validationSheet.getCell(`U${rowNumber}`).value = "DONE(REJECT)";
+					validationSheet.getCell(`V${rowNumber}`).value = "RESIGN";
 				}
 			}
 
 			if (IValue == "BUKAN TEKNISI") {
 				if (xValue === "aktif" || yValue === "active") {
-					validationSheet.getCell(`R${rowNumber}`).value = "TERMINATE USER";
-					validationSheet.getCell(`T${rowNumber}`).value = "";
-					validationSheet.getCell(`U${rowNumber}`).value = "BUKAN TEKNISI";
+					validationSheet.getCell(`S${rowNumber}`).value = "TERMINATE USER";
+					validationSheet.getCell(`U${rowNumber}`).value = "";
+					validationSheet.getCell(`V${rowNumber}`).value = "BUKAN TEKNISI";
 				} else {
-					validationSheet.getCell(`R${rowNumber}`).value = "REJECT";
-					validationSheet.getCell(`T${rowNumber}`).value = "DONE(REJECT)";
-					validationSheet.getCell(`U${rowNumber}`).value = "BUKAN TEKNISI";
+					validationSheet.getCell(`S${rowNumber}`).value = "REJECT";
+					validationSheet.getCell(`U${rowNumber}`).value = "DONE(REJECT)";
+					validationSheet.getCell(`V${rowNumber}`).value = "BUKAN TEKNISI";
 				}
 			}
 
 			const updatedRValue = String(
-				validationSheet.getCell(`R${rowNumber}`).value || ""
+				validationSheet.getCell(`S${rowNumber}`).value || ""
 			);
 
 			if (
@@ -80,69 +82,105 @@ export const evaluateRow = async (
 				updatedRValue != "REJECT"
 			) {
 				if (xValue === "-" && yValue === "-") {
-					validationSheet.getCell(`R${rowNumber}`).value = "CREATE USER";
+					validationSheet.getCell(`S${rowNumber}`).value = "CREATE USER";
 				}
 				if (xValue === "-" && yValue !== "-") {
-					validationSheet.getCell(`R${rowNumber}`).value = "CREATE MYTECH";
+					validationSheet.getCell(`S${rowNumber}`).value = "CREATE MYTECH";
 				}
 				if (xValue !== "-" && yValue === "-") {
-					validationSheet.getCell(`R${rowNumber}`).value = "CREATE SCMT";
+					validationSheet.getCell(`S${rowNumber}`).value = "CREATE SCMT";
 				}
 				if (xValue === "non aktif") {
-					const currentValue = validationSheet.getCell(`R${rowNumber}`).value;
+					const currentValue = validationSheet.getCell(`S${rowNumber}`).value;
 					if (currentValue) {
-						validationSheet.getCell(`R${rowNumber}`).value = `${String(
+						validationSheet.getCell(`S${rowNumber}`).value = `${String(
 							currentValue
 						)}, AKTIVASI MYTECH`;
 					} else {
-						validationSheet.getCell(`R${rowNumber}`).value = "AKTIVASI MYTECH";
+						validationSheet.getCell(`S${rowNumber}`).value = "AKTIVASI MYTECH";
 					}
 				}
 				if (yValue === "inactive") {
-					const currentValue = validationSheet.getCell(`R${rowNumber}`).value;
+					const currentValue = validationSheet.getCell(`S${rowNumber}`).value;
 					if (currentValue) {
-						validationSheet.getCell(`R${rowNumber}`).value = `${String(
+						validationSheet.getCell(`S${rowNumber}`).value = `${String(
 							currentValue
 						)}, AKTIVASI SCMT`;
 					} else {
-						validationSheet.getCell(`R${rowNumber}`).value = "AKTIVASI SCMT";
+						validationSheet.getCell(`S${rowNumber}`).value = "AKTIVASI SCMT";
 					}
 				}
 
-				if (lValue && zValue) {
-					const lValues = lValue
-						.split(",")
-						.map((v) => v.trim())
-						.filter(Boolean);
-					const zValues = zValue
-						.split("|")
-						.map((v) => v.trim())
-						.filter(Boolean);
+				const lValues = lValue
+					.split(",")
+					.map((v) => v.trim())
+					.filter(Boolean);
+				const mValues = mValue
+					.split(",")
+					.map((v) => v.trim())
+					.filter(Boolean);
+				const zValues = zValue
+					.split("|")
+					.map((v) => v.trim())
+					.filter(Boolean);
 
-					const missingValues = lValues.filter((lVal) => {
-						const paradiseMatch = lVal.match(/\(([^)]+)\)/);
-						const whParadiseTranslationMatch = paradiseMatch
-							? paradiseMatch[1]
-							: null;
-						return (
-							!zValues.includes(lVal) &&
-							(!whParadiseTranslationMatch ||
-								!zValues.includes(whParadiseTranslationMatch))
-						);
-					});
+				const missingSCMT = lValues.filter((lVal) => {
+					// const paradiseMatch = lVal.match(/\(([^)]+)\)/);
+					// const whParadiseTranslationMatch = paradiseMatch
+					// 	? paradiseMatch[1]
+					// 	: null;
+					return !zValues.includes(lVal);
+					//  &&
+					// (!whParadiseTranslationMatch ||
+					// 	!zValues.includes(whParadiseTranslationMatch))
+				});
 
-					if (missingValues.length > 0) {
-						const currentValue = validationSheet.getCell(`R${rowNumber}`).value;
-						if (currentValue) {
-							validationSheet.getCell(`R${rowNumber}`).value = `${String(
-								currentValue
-							)}, TAMBAH GUDANG`;
-						} else {
-							validationSheet.getCell(`R${rowNumber}`).value = "TAMBAH GUDANG";
-						}
+				const missingParadise = mValues.filter((mVal) => {
+					const paradiseMatch = mVal.match(/\(([^)]+)\)/);
+					const whParadiseTranslationMatch = paradiseMatch
+						? paradiseMatch[1]
+						: null;
+					return (
+						!whParadiseTranslationMatch ||
+						!zValues.includes(whParadiseTranslationMatch)
+					);
+				});
+
+				const anyMissingGudang =
+					missingSCMT.length > 0 || missingParadise.length > 0;
+
+				if (anyMissingGudang) {
+					const currentValue = validationSheet.getCell(`S${rowNumber}`).value;
+					if (currentValue) {
+						validationSheet.getCell(`S${rowNumber}`).value = `${String(
+							currentValue
+						)}, TAMBAH GUDANG`;
+					} else {
+						validationSheet.getCell(`S${rowNumber}`).value = "TAMBAH GUDANG";
+					}
+				}
+
+				if (missingSCMT.length > 0) {
+					validationSheet.getCell(
+						`V${rowNumber}`
+					).value = `Menambahkan Gudang SCMT ${missingSCMT.join(", ")}`;
+				}
+
+				if (missingParadise.length > 0) {
+					const currentKeteranganValue = validationSheet.getCell(
+						`V${rowNumber}`
+					).value;
+
+					if (currentKeteranganValue) {
+						validationSheet.getCell(`V${rowNumber}`).value = `${String(
+							currentKeteranganValue
+						)}, Gudang Paradise ${missingParadise.join(", ")}`;
+					} else {
 						validationSheet.getCell(
-							`U${rowNumber}`
-						).value = `Menambahkan Gudang ${missingValues.join(", ")}`;
+							`V${rowNumber}`
+						).value = `Menambahkan Gudang Paradise ${missingParadise.join(
+							", "
+						)}`;
 					}
 				}
 			}
@@ -150,10 +188,10 @@ export const evaluateRow = async (
 
 		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber === 1) return;
-			const rValue = row.getCell("R").value;
+			const rValue = row.getCell("S").value;
 			if (!rValue) {
-				validationSheet.getCell(`R${rowNumber}`).value = "CREATE USER";
-				validationSheet.getCell(`T${rowNumber}`).value = "DONE(EKSISTING)";
+				validationSheet.getCell(`S${rowNumber}`).value = "CREATE USER";
+				validationSheet.getCell(`U${rowNumber}`).value = "DONE(EKSISTING)";
 			}
 		});
 	} catch (error) {
@@ -180,7 +218,7 @@ export const validateLaborReject = (
 			Array<{
 				rowNumber: number;
 				hasAccess: boolean;
-				columnQ: string;
+				columnLabor: string;
 			}>
 		>();
 
@@ -190,15 +228,15 @@ export const validateLaborReject = (
 			const nikValue = String(columnA || "");
 			if ((nikOccurrences.get(nikValue) || 0) <= 1) return;
 
-			const columnQ = row.getCell("Q").value;
-			const columnX = row.getCell("X").value;
-			const columnY = row.getCell("Y").value;
-			const columnAA = row.getCell("AA").value;
+			const columnLabor = row.getCell("R").value;
+			// const columnX = row.getCell("X").value;
+			// const columnY = row.getCell("Y").value;
+			const columnNTE = row.getCell("AB").value;
 
-			const qValue = String(columnQ || "");
-			const mytechStatus = String(columnX || "");
-			const scmtStatus = String(columnY || "");
-			const nteCount = Number(columnAA) || 0;
+			const laborValue = String(columnLabor || "");
+			// const mytechStatus = String(columnX || "");
+			// const scmtStatus = String(columnY || "");
+			const nteCount = Number(columnNTE) || 0;
 
 			// const hasAccess =
 			// 	(mytechStatus === "aktif" || scmtStatus === "active") && nteCount > 0;
@@ -212,7 +250,7 @@ export const validateLaborReject = (
 			nikGroups.get(nikValue)?.push({
 				rowNumber,
 				hasAccess,
-				columnQ: qValue,
+				columnLabor: laborValue,
 			});
 		});
 
@@ -220,19 +258,19 @@ export const validateLaborReject = (
 		for (const [nikValue, rowsData] of nikGroups) {
 			const hasAnyAccess = rowsData.some((row) => row.hasAccess);
 			if (hasAnyAccess) {
-				const accessColumnQs = rowsData
+				const accessColumnLabor = rowsData
 					.filter((row) => row.hasAccess)
-					.map((row) => row.columnQ)
+					.map((row) => row.columnLabor)
 					.join(", ");
 
 				rowsData.forEach((rowData) => {
-					if (nikValue === rowData.columnQ && !rowData.hasAccess) {
-						validationSheet.getCell(`R${rowData.rowNumber}`).value = "REJECT";
-						validationSheet.getCell(`T${rowData.rowNumber}`).value =
+					if (nikValue === rowData.columnLabor && !rowData.hasAccess) {
+						validationSheet.getCell(`S${rowData.rowNumber}`).value = "REJECT";
+						validationSheet.getCell(`U${rowData.rowNumber}`).value =
 							"DONE(REJECT)";
 						validationSheet.getCell(
 							`U${rowData.rowNumber}`
-						).value = `Masih Membawa NTE Pada Labor ${accessColumnQs}`;
+						).value = `Masih Membawa NTE Pada Labor ${accessColumnLabor}`;
 					}
 				});
 			}
