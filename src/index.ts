@@ -3,7 +3,7 @@ const cookieParser = require("cookie-parser");
 import dotenv from "dotenv";
 dotenv.config();
 import multer from "multer";
-import { automate } from "./action/automate";
+import { automate, postprocess } from "./action/automate";
 import { getTeknisi } from "./utils/naker.query";
 import type { Request, Response } from "express";
 import { getAllUserLabor } from "./action/validation";
@@ -62,7 +62,7 @@ app.post(
 			const filePath = req?.file?.path;
 			if (!filePath) return res.status(400).send("No file uploaded");
 
-			const processedWorkbook = await automate(filePath);
+			const processedWorkbook = await postprocess(filePath);
 			res.setHeader(
 				"Content-Disposition",
 				"attachment; filename=processed.xlsx"

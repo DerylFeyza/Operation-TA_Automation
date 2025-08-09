@@ -253,10 +253,8 @@ export const validateOldNIK = async (
 	}
 };
 
-export const highlightAndFormat = async (
-	workbook: ExcelJS.Workbook,
-	validationSheet: ExcelJS.Worksheet
-) => {
+export const highlightAndFormat = async (workbook: ExcelJS.Workbook) => {
+	const validationSheet = workbook.getWorksheet("validation");
 	const lastRow = validationSheet.actualRowCount;
 	const valueCounts: { [key: string]: number } = {};
 
@@ -348,10 +346,7 @@ export const highlightAndFormat = async (
 	tempSheet.name = validationSheetName;
 };
 
-export const translateWHParadise = async (
-	mainWorkbook: ExcelJS.Workbook,
-	validationSheet: ExcelJS.Worksheet
-) => {
+export const translateWHParadise = async (mainWorkbook: ExcelJS.Workbook) => {
 	const workbook = new ExcelJS.Workbook();
 	try {
 		await workbook.xlsx.readFile("src/resources/scmt-paradise.xlsx");
@@ -362,6 +357,7 @@ export const translateWHParadise = async (
 			return null;
 		}
 
+		const validationSheet = mainWorkbook.getWorksheet("validation");
 		const targetWorksheet = mainWorkbook.addWorksheet("scmt-paradise");
 
 		sourceWorksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {

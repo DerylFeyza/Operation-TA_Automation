@@ -20,6 +20,7 @@ import {
 	translateWHParadise,
 } from "./validation";
 import { evaluateRow } from "./evaluate";
+import { prepareUnggahTeknisi } from "./postprocessing";
 
 export const automate = async (filePath: string) => {
 	try {
@@ -261,9 +262,9 @@ export const automate = async (filePath: string) => {
 			validationSheet.getCell(`AA${row}`).value = scmtwh;
 			validationSheet.getCell(`AB${row}`).value = scmtnte;
 		}
-		await translateWHParadise(workbook, validationSheet);
+		await translateWHParadise(workbook);
 		await evaluateRow(validationSheet);
-		await highlightAndFormat(workbook, validationSheet);
+		await highlightAndFormat(workbook);
 
 		return workbook;
 	} catch (error) {
@@ -283,6 +284,26 @@ export const postprocess = async (filePath: string) => {
 		if (!sourceSheet) {
 			throw new Error("validation sheet not found");
 		}
+
+		const isUnggahTeknisi: any[] = [];
+		sourceSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+			if (rowNumber >= 2) {
+				const cellValue = row.getCell("AF").value;
+				isUnggahTeknisi.push(cellValue);
+			}
+		});
+
+		const hasUnggahTeknisi = isUnggahTeknisi.some(
+			(value) =>
+				value === true ||
+				(typeof value === "string" && value.toLowerCase() === "true")
+		);
+
+		if (hasUnggahTeknisi) {
+			await prepareUnggahTeknisi(workbook);
+		}
+
+		return workbook;
 	} catch (error) {
 		console.error("Automation error:", error);
 		throw error;
