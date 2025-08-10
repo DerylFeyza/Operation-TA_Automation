@@ -51,18 +51,10 @@ export const prepareUnggahTeknisi = async (mainWorkbook: ExcelJS.Workbook) => {
 			{ source: "C", target: "Q" },
 		];
 
-		const colLetterToIndex = (letter: string) => {
-			let result = 0;
-			for (let i = 0; i < letter.length; i++) {
-				result = result * 26 + (letter.charCodeAt(i) - 64);
-			}
-			return result;
-		};
-
 		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber === 1) return;
 
-			const afCell = row.getCell(colLetterToIndex("AF"));
+			const afCell = row.getCell("AF");
 			const afValue = afCell.value;
 
 			if (
@@ -72,14 +64,12 @@ export const prepareUnggahTeknisi = async (mainWorkbook: ExcelJS.Workbook) => {
 				const targetRow = targetWorksheet.getRow(targetRowIndex++);
 
 				columnMapping.forEach(({ source, target }) => {
-					targetRow.getCell(colLetterToIndex(target)).value = row.getCell(
-						colLetterToIndex(source)
-					).value;
+					targetRow.getCell(target).value = row.getCell(source).value;
 				});
 
-				const cellM = targetRow.getCell(colLetterToIndex("M"));
-				const cellN = targetRow.getCell(colLetterToIndex("N"));
-				const cellO = targetRow.getCell(colLetterToIndex("O"));
+				const cellM = targetRow.getCell("M");
+				const cellN = targetRow.getCell("N");
+				const cellO = targetRow.getCell("O");
 
 				cellM.dataValidation = JSON.parse(JSON.stringify(dropdownM));
 				cellN.dataValidation = JSON.parse(JSON.stringify(dropdownN));
@@ -94,5 +84,106 @@ export const prepareUnggahTeknisi = async (mainWorkbook: ExcelJS.Workbook) => {
 		});
 	} catch (error) {
 		console.error("Error preparing unggah_teknisi sheet:", error);
+	}
+};
+
+export const prepareSCMT = async (mainWorkbook: ExcelJS.Workbook) => {
+	try {
+		const validationSheet = mainWorkbook.getWorksheet("validation");
+
+		let activateSheet = mainWorkbook.getWorksheet("activate_scmt");
+		let addwhSheet = mainWorkbook.getWorksheet("addwh_scmt");
+
+		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+			if (activateSheet && addwhSheet) return;
+
+			if (rowNumber === 1) return;
+
+			const adValue = row.getCell("AD").value;
+			const aeValue = row.getCell("AE").value;
+
+			if (
+				!activateSheet &&
+				(adValue === true ||
+					(typeof adValue === "string" && adValue.toUpperCase() === "TRUE"))
+			) {
+				mainWorkbook.addWorksheet("activate_scmt");
+				activateSheet = mainWorkbook.getWorksheet("activate_scmt");
+			}
+
+			if (
+				!addwhSheet &&
+				(aeValue === true ||
+					(typeof aeValue === "string" && aeValue.toUpperCase() === "TRUE"))
+			) {
+				mainWorkbook.addWorksheet("addwh_scmt");
+				addwhSheet = mainWorkbook.getWorksheet("addwh_scmt");
+			}
+
+			if (activateSheet && addwhSheet) return true;
+		});
+
+		if (activateSheet) {
+			activateSheet.getCell("A1").value =
+				"technician_code;technician_ktp;old_warehouse_code;new_warehouse_code;ignore_stock";
+			let rowIndex = 2;
+			validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+				if (rowNumber === 1) return;
+				const activateSCMTRow = row.getCell("AD").value;
+				if (
+					activateSCMTRow === true ||
+					(typeof activateSCMTRow === "string" &&
+						activateSCMTRow.toUpperCase() === "TRUE")
+				) {
+					const technicianCode = row.getCell("R").value || "";
+					const technicianKtp = row.getCell("G").value || "";
+
+					activateSheet.getCell(
+						`A${rowIndex}`
+					).value = `${technicianCode};${technicianKtp};;;YES`;
+
+					rowIndex++;
+				}
+			});
+		}
+		if (addwhSheet) {
+			addwhSheet.getCell("A1").value =
+				"technician_code;technician_ktp;old_warehouse_code;new_warehouse_code;ignore_stock";
+			let rowIndex = 2;
+			validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+				if (rowNumber === 1) return;
+				const addwhSCMTRow = row.getCell("AE").value;
+				if (
+					addwhSCMTRow === true ||
+					(typeof addwhSCMTRow === "string" &&
+						addwhSCMTRow.toUpperCase() === "TRUE")
+				) {
+					const technicianCode = row.getCell("R").value || "";
+					const technicianKtp = row.getCell("G").value || "";
+					const technicianWHSCMT = (row.getCell("L").value || "").toString();
+					if (technicianWHSCMT.includes(",")) {
+						const warehouseCodes = technicianWHSCMT
+							.split(",")
+							.map((code) => code.trim())
+							.filter(Boolean);
+						for (const whCode of warehouseCodes) {
+							addwhSheet.getCell(
+								`A${rowIndex}`
+							).value = `${technicianCode};${technicianKtp};;${whCode};YES`;
+
+							rowIndex++;
+						}
+					} else {
+						addwhSheet.getCell(
+							`A${rowIndex}`
+						).value = `${technicianCode};${technicianKtp};;${technicianWHSCMT};YES`;
+
+						rowIndex++;
+					}
+				}
+			});
+		}
+	} catch (error) {
+		console.error("Error preparing add_wh_scmt sheet:", error);
 	}
 };

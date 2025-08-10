@@ -20,7 +20,7 @@ import {
 	translateWHParadise,
 } from "./validation";
 import { evaluateRow } from "./evaluate";
-import { prepareUnggahTeknisi } from "./postprocessing";
+import { prepareUnggahTeknisi, prepareSCMT } from "./postprocessing";
 
 export const automate = async (filePath: string) => {
 	try {
@@ -285,23 +285,24 @@ export const postprocess = async (filePath: string) => {
 			throw new Error("validation sheet not found");
 		}
 
-		const isUnggahTeknisi: any[] = [];
+		let hasUnggahTeknisi = false;
 		sourceSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-			if (rowNumber >= 2) {
+			if (!hasUnggahTeknisi && rowNumber >= 2) {
 				const cellValue = row.getCell("AF").value;
-				isUnggahTeknisi.push(cellValue);
+				if (
+					cellValue === true ||
+					(typeof cellValue === "string" && cellValue.toLowerCase() === "true")
+				) {
+					hasUnggahTeknisi = true;
+				}
 			}
 		});
-
-		const hasUnggahTeknisi = isUnggahTeknisi.some(
-			(value) =>
-				value === true ||
-				(typeof value === "string" && value.toLowerCase() === "true")
-		);
 
 		if (hasUnggahTeknisi) {
 			await prepareUnggahTeknisi(workbook);
 		}
+
+		await prepareSCMT(workbook)
 
 		return workbook;
 	} catch (error) {
