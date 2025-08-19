@@ -1,6 +1,162 @@
 import ExcelJS from "exceljs";
 
-export const prepareUnggahTeknisi = async (mainWorkbook: ExcelJS.Workbook) => {
+export const highlightAndFormat = async (workbook: ExcelJS.Workbook) => {
+	const validationSheet = workbook.getWorksheet("validation");
+	const lastRow = validationSheet.actualRowCount;
+	const valueCounts: { [key: string]: number } = {};
+
+	for (let row = 2; row <= lastRow; row++) {
+		const cellValue = validationSheet.getCell(`A${row}`).value;
+		if (cellValue !== null && cellValue !== undefined) {
+			const strValue = String(cellValue);
+			valueCounts[strValue] = (valueCounts[strValue] || 0) + 1;
+		}
+	}
+
+	for (let row = 2; row <= lastRow; row++) {
+		const cellValue = validationSheet.getCell(`A${row}`).value;
+		if (cellValue !== null && cellValue !== undefined) {
+			const strValue = String(cellValue);
+			if (valueCounts[strValue] > 1) {
+				validationSheet.getCell(`A${row}`).fill = {
+					type: "pattern",
+					pattern: "solid",
+					fgColor: { argb: "FF90EE90" },
+				};
+			}
+		}
+	}
+
+	const rowsToSort: {
+		rowNum: number;
+		rowData: any[];
+		isDuplicate: boolean;
+		value: any;
+	}[] = [];
+
+	for (let row = 2; row <= lastRow; row++) {
+		const cellValue = validationSheet.getCell(`A${row}`).value;
+		const rowData: any[] = [];
+
+		for (let col = 1; col <= validationSheet.columnCount; col++) {
+			const cell = validationSheet.getCell(row, col);
+			rowData.push({
+				value: cell.value,
+				style: cell.style ? JSON.parse(JSON.stringify(cell.style)) : null,
+			});
+		}
+
+		rowsToSort.push({
+			rowNum: row,
+			rowData: rowData,
+			isDuplicate: valueCounts[String(cellValue)] > 1,
+			value: cellValue,
+		});
+	}
+
+	rowsToSort.sort((a, b) => {
+		if (a.isDuplicate !== b.isDuplicate) {
+			return a.isDuplicate ? -1 : 1;
+		}
+		if (a.value === b.value) return 0;
+		return a.value < b.value ? -1 : 1;
+	});
+
+	const tempSheet = workbook.addWorksheet("TempSorted");
+
+	for (let col = 1; col <= validationSheet.columnCount; col++) {
+		tempSheet.getCell(1, col).value = validationSheet.getCell(1, col).value;
+		const headerCell = validationSheet.getCell(1, col);
+		if (headerCell.style) {
+			tempSheet.getCell(1, col).style = JSON.parse(
+				JSON.stringify(headerCell.style)
+			);
+		}
+	}
+
+	rowsToSort.forEach((item, index) => {
+		const targetRowNum = index + 2;
+
+		for (let col = 1; col <= validationSheet.columnCount; col++) {
+			const targetCell = tempSheet.getCell(targetRowNum, col);
+			const sourceData = item.rowData[col - 1];
+
+			targetCell.value = sourceData.value;
+			if (sourceData.style) {
+				targetCell.style = sourceData.style;
+			}
+		}
+	});
+
+	const validationSheetName = validationSheet.name;
+	workbook.removeWorksheet(validationSheet.id);
+	tempSheet.name = validationSheetName;
+};
+
+export const translateWHParadise = async (mainWorkbook: ExcelJS.Workbook) => {
+	const workbook = new ExcelJS.Workbook();
+	try {
+		await workbook.xlsx.readFile("src/resources/scmt-paradise.xlsx");
+
+		const sourceWorksheet = workbook.getWorksheet(1);
+		if (!sourceWorksheet) {
+			console.error("Worksheet not found in scmt-paradise.xlsx");
+			return null;
+		}
+
+		const validationSheet = mainWorkbook.getWorksheet("validation");
+		const targetWorksheet = mainWorkbook.addWorksheet("scmt-paradise");
+
+		sourceWorksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+			const targetRow = targetWorksheet.getRow(rowNumber);
+
+			row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+				targetRow.getCell(colNumber).value = cell.value;
+				if (cell.style) {
+					targetRow.getCell(colNumber).style = JSON.parse(
+						JSON.stringify(cell.style)
+					);
+				}
+			});
+
+			targetRow.commit();
+		});
+
+		const dimensionToCodeMap = new Map();
+		targetWorksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+			if (rowNumber > 1) {
+				const dimension = String(row.getCell("E").value || "");
+				const code = String(row.getCell("A").value || "");
+				if (dimension && code) {
+					dimensionToCodeMap.set(dimension.trim(), code);
+				}
+			}
+		});
+
+		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+			if (rowNumber > 1) {
+				const cellWHParadise = String(row.getCell("M").value || "");
+				for (const [dimension, code] of dimensionToCodeMap.entries()) {
+					if (cellWHParadise.includes(dimension)) {
+						const updatedValue = cellWHParadise.replace(
+							dimension,
+							`${dimension}(${code})`
+						);
+						row.getCell("M").value = updatedValue;
+						break;
+					}
+				}
+			}
+		});
+
+		return targetWorksheet;
+	} catch (error) {
+		console.error("Error reading scmt-paradise.xlsx:", error);
+		return null;
+	}
+};
+
+export const formatUnggahTeknisi = async (mainWorkbook: ExcelJS.Workbook) => {
 	const workbook = new ExcelJS.Workbook();
 	await workbook.xlsx.readFile("src/resources/unggah_teknisi_format.xlsx");
 
@@ -87,7 +243,7 @@ export const prepareUnggahTeknisi = async (mainWorkbook: ExcelJS.Workbook) => {
 	}
 };
 
-export const prepareSCMT = async (mainWorkbook: ExcelJS.Workbook) => {
+export const formatSCMT = async (mainWorkbook: ExcelJS.Workbook) => {
 	try {
 		const validationSheet = mainWorkbook.getWorksheet("validation");
 

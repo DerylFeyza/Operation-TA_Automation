@@ -1,29 +1,35 @@
 import ExcelJS from "exceljs";
+import type { Request, Response } from "express";
+import fs from "fs";
+import {
+	sourceSheetType,
+	TeknisiType,
+	AksesMytechType,
+} from "../types/teknisi";
 import { getTeknisi } from "../utils/naker.query";
+import { getAksesMyTech, getAksesSCMT } from "../utils/operation.query";
 import {
 	initializeValidationSheet,
 	initializeQuerySheet,
 	initializeMyTechSheet,
 	initializeSCMTSheet,
-} from "./sheets";
-import {
-	TeknisiType,
-	NIKLamaType,
-	AksesMytechType,
-	sourceSheetType,
-} from "../types/teknisi";
-import { getAksesMyTech, getAksesSCMT } from "../utils/operation.query";
+} from "../services/sheet.service";
 import {
 	validateTeleAccess,
 	validateOldNIK,
-	highlightAndFormat,
+	getAllUserLabor,
+} from "../services/validation.service";
+import {
 	translateWHParadise,
-} from "./validation";
-import { evaluateRow } from "./evaluate";
-import { prepareUnggahTeknisi, prepareSCMT } from "./postprocessing";
+	highlightAndFormat,
+} from "../services/format.service";
+import { evaluateRow } from "../services/evaluate.service";
 
-export const automate = async (filePath: string) => {
+export const automateValidation = async (req: Request, res: Response) => {
 	try {
+		const filePath = req?.file?.path;
+		if (!filePath) return res.status(400).send("No file uploaded");
+
 		const workbook = new ExcelJS.Workbook();
 		workbook.calcProperties.fullCalcOnLoad = true;
 
@@ -97,12 +103,7 @@ export const automate = async (filePath: string) => {
 			validationSheet.getCell(`R${targetRow}`).value = value;
 		});
 
-		await validateOldNIK(
-			workbook,
-			validationSheet,
-			querySheet,
-			querySheetColumnAValues
-		);
+		await validateOldNIK(workbook, validationSheet, querySheet);
 		await validateTeleAccess(workbook, validationSheet, querySheet);
 
 		const lastRowWithData = validationSheet.actualRowCount;
@@ -266,47 +267,38 @@ export const automate = async (filePath: string) => {
 		await evaluateRow(validationSheet);
 		await highlightAndFormat(workbook);
 
-		return workbook;
-	} catch (error) {
-		console.error("Automation error:", error);
-		throw error;
+		res.setHeader("Content-Disposition", "attachment; filename=processed.xlsx");
+		res.setHeader(
+			"Content-Type",
+			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+		);
+
+		await workbook.xlsx.write(res);
+		res.end();
+
+		fs.unlinkSync(filePath);
+	} catch (err) {
+		console.error(err);
+		res.status(500).send("Error processing Excel file");
 	}
 };
 
-export const postprocess = async (filePath: string) => {
+export const accessNIK = async (req: Request, res: Response) => {
 	try {
-		const workbook = new ExcelJS.Workbook();
-		workbook.calcProperties.fullCalcOnLoad = true;
-
-		await workbook.xlsx.readFile(filePath);
-
-		const sourceSheet = workbook.getWorksheet("validation");
-		if (!sourceSheet) {
-			throw new Error("validation sheet not found");
+		const id = req.params.id;
+		const teknisiData = await getTeknisi(id ? [id] : []);
+		if (teknisiData.length == 0) {
+			return res.status(404).send("Teknisi Not Found");
 		}
 
-		let hasUnggahTeknisi = false;
-		sourceSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-			if (!hasUnggahTeknisi && rowNumber >= 2) {
-				const cellValue = row.getCell("AF").value;
-				if (
-					cellValue === true ||
-					(typeof cellValue === "string" && cellValue.toLowerCase() === "true")
-				) {
-					hasUnggahTeknisi = true;
-				}
-			}
+		const laborAccess = await getAllUserLabor(id, teknisiData[0].id_telegram);
+
+		return res.json({
+			data: teknisiData,
+			labors: laborAccess,
 		});
-
-		if (hasUnggahTeknisi) {
-			await prepareUnggahTeknisi(workbook);
-		}
-
-		await prepareSCMT(workbook)
-
-		return workbook;
 	} catch (error) {
-		console.error("Automation error:", error);
-		throw error;
+		console.error(error);
+		res.status(500).send("Error fetching teknisi data");
 	}
 };
