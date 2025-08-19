@@ -2,14 +2,14 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 dotenv.config();
-import type { Request, Response } from "express";
+import type { Response } from "express";
 
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
 app.get("/", (res: Response) => {
-	res.send("NDE Format Automation API by deryl");
+	res.send("Operation TA Automation API by deryl");
 });
 
 const validationRoute = require("./routes/validation.route");

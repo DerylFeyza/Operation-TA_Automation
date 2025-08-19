@@ -1,5 +1,5 @@
-import { executeQuery } from "../lib/oracle";
-import { AksesMytechType } from "../types/teknisi";
+import { executeQuery } from "../../lib/oracle";
+import { AksesMytechType } from "../../types/teknisi";
 
 export async function getAksesSCMT(laborList: string[] = []) {
 	try {

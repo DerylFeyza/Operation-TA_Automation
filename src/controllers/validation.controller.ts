@@ -6,8 +6,11 @@ import {
 	TeknisiType,
 	AksesMytechType,
 } from "../types/teknisi";
-import { getTeknisi } from "../utils/naker.query";
-import { getAksesMyTech, getAksesSCMT } from "../utils/operation.query";
+import { getTeknisi } from "../utils/database/naker.query";
+import {
+	getAksesMyTech,
+	getAksesSCMT,
+} from "../utils/database/operation.query";
 import {
 	initializeValidationSheet,
 	initializeQuerySheet,
@@ -24,6 +27,7 @@ import {
 	highlightAndFormat,
 } from "../services/format.service";
 import { evaluateRow } from "../services/evaluate.service";
+import { getCurrentTime } from "../utils/utils";
 
 export const automateValidation = async (req: Request, res: Response) => {
 	try {
@@ -103,7 +107,7 @@ export const automateValidation = async (req: Request, res: Response) => {
 			validationSheet.getCell(`R${targetRow}`).value = value;
 		});
 
-		await validateOldNIK(workbook, validationSheet, querySheet);
+		await validateOldNIK(workbook, validationSheet, querySheetColumnAValues);
 		await validateTeleAccess(workbook, validationSheet, querySheet);
 
 		const lastRowWithData = validationSheet.actualRowCount;
@@ -267,7 +271,10 @@ export const automateValidation = async (req: Request, res: Response) => {
 		await evaluateRow(validationSheet);
 		await highlightAndFormat(workbook);
 
-		res.setHeader("Content-Disposition", "attachment; filename=processed.xlsx");
+		res.setHeader(
+			"Content-Disposition",
+			`attachment; filename=processed_${getCurrentTime()}.xlsx`
+		);
 		res.setHeader(
 			"Content-Type",
 			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
