@@ -1,23 +1,35 @@
 import ExcelJS from "exceljs";
+import type { Request, Response } from "express";
+import fs from "fs";
+import {
+	sourceSheetType,
+	TeknisiType,
+	AksesMytechType,
+} from "../types/teknisi";
 import { getTeknisi } from "../utils/naker.query";
+import { getAksesMyTech, getAksesSCMT } from "../utils/operation.query";
 import {
 	initializeValidationSheet,
 	initializeQuerySheet,
 	initializeMyTechSheet,
 	initializeSCMTSheet,
-} from "./sheets";
-import { TeknisiType, NIKLamaType, AksesMytechType } from "../types/teknisi";
-import { getAksesMyTech, getAksesSCMT } from "../utils/operation.query";
+} from "../services/sheet.service";
 import {
 	validateTeleAccess,
 	validateOldNIK,
-	highlightAndFormat,
+	getAllUserLabor,
+} from "../services/validation.service";
+import {
 	translateWHParadise,
-} from "./validation";
-import { evaluateRow } from "./evaluate";
+	highlightAndFormat,
+} from "../services/format.service";
+import { evaluateRow } from "../services/evaluate.service";
 
-export const automate = async (filePath: string) => {
+export const automateValidation = async (req: Request, res: Response) => {
 	try {
+		const filePath = req?.file?.path;
+		if (!filePath) return res.status(400).send("No file uploaded");
+
 		const workbook = new ExcelJS.Workbook();
 		workbook.calcProperties.fullCalcOnLoad = true;
 
@@ -36,18 +48,19 @@ export const automate = async (filePath: string) => {
 			}
 		});
 
-		const sourceData: any[] = [];
+		const sourceData: sourceSheetType[] = [];
 		sourceSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber >= 2) {
 				sourceData.push({
 					nik: row.getCell(1).value,
-					col2: row.getCell(2).value,
-					col3: row.getCell(3).value,
-					col4: row.getCell(4).value,
-					col5: row.getCell(5).value,
-					col6: row.getCell(6).value,
-					col7: row.getCell(7).value,
-					col8: row.getCell(8).value,
+					sto: row.getCell(2).value,
+					ccan: row.getCell(3).value,
+					inv: row.getCell(4).value,
+					nde: row.getCell(5).value,
+					nikpengirim: row.getCell(6).value,
+					pengirim: row.getCell(7).value,
+					tglnde: row.getCell(8).value,
+					request: row.getCell(9).value,
 				});
 			}
 		});
@@ -87,15 +100,10 @@ export const automate = async (filePath: string) => {
 		querySheetColumnAValues.forEach((value, index) => {
 			const targetRow = index + 2;
 			validationSheet.getCell(`A${targetRow}`).value = value;
-			validationSheet.getCell(`Q${targetRow}`).value = value;
+			validationSheet.getCell(`R${targetRow}`).value = value;
 		});
 
-		await validateOldNIK(
-			workbook,
-			validationSheet,
-			querySheet,
-			querySheetColumnAValues
-		);
+		await validateOldNIK(workbook, validationSheet, querySheet);
 		await validateTeleAccess(workbook, validationSheet, querySheet);
 
 		const lastRowWithData = validationSheet.actualRowCount;
@@ -125,20 +133,22 @@ export const automate = async (filePath: string) => {
 			);
 
 			if (matchingSourceRow) {
-				validationSheet.getCell(`K${row}`).value = matchingSourceRow.col2;
-				validationSheet.getCell(`L${row}`).value = matchingSourceRow.col3;
-				validationSheet.getCell(`M${row}`).value = matchingSourceRow.col4;
-				validationSheet.getCell(`N${row}`).value = matchingSourceRow.col5;
-				validationSheet.getCell(`O${row}`).value = matchingSourceRow.col6;
-				validationSheet.getCell(`P${row}`).value = matchingSourceRow.col7;
-				validationSheet.getCell(`AB${row}`).value = matchingSourceRow.col8;
+				validationSheet.getCell(`K${row}`).value = matchingSourceRow.sto;
+				validationSheet.getCell(`L${row}`).value = matchingSourceRow.ccan;
+				validationSheet.getCell(`M${row}`).value = matchingSourceRow.inv;
+				validationSheet.getCell(`N${row}`).value = matchingSourceRow.nde;
+				validationSheet.getCell(`O${row}`).value =
+					matchingSourceRow.nikpengirim;
+				validationSheet.getCell(`P${row}`).value = matchingSourceRow.pengirim;
+				validationSheet.getCell(`Q${row}`).value = matchingSourceRow.tglnde;
+				validationSheet.getCell(`AB${row}`).value = matchingSourceRow.request;
 			}
 		}
 
 		const formatLabor: any[] = [];
 		validationSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
 			if (rowNumber >= 2) {
-				let cellValue = row.getCell(17).value;
+				let cellValue = row.getCell(18).value;
 				if (
 					cellValue !== null &&
 					cellValue !== undefined &&
@@ -205,7 +215,7 @@ export const automate = async (filePath: string) => {
 
 		const lastValidationRow = validationSheet.actualRowCount;
 		for (let row = 2; row <= lastValidationRow; row++) {
-			const lookupValue = validationSheet.getCell(`Q${row}`).value;
+			const lookupValue = validationSheet.getCell(`R${row}`).value;
 			let result = "-";
 			let scmtresult = "-";
 			let scmtwh = "-";
@@ -248,18 +258,47 @@ export const automate = async (filePath: string) => {
 				});
 			}
 
-			validationSheet.getCell(`X${row}`).value = result;
-			validationSheet.getCell(`Y${row}`).value = scmtresult;
-			validationSheet.getCell(`Z${row}`).value = scmtwh;
-			validationSheet.getCell(`AA${row}`).value = scmtnte;
+			validationSheet.getCell(`Y${row}`).value = result;
+			validationSheet.getCell(`Z${row}`).value = scmtresult;
+			validationSheet.getCell(`AA${row}`).value = scmtwh;
+			validationSheet.getCell(`AB${row}`).value = scmtnte;
 		}
-		await translateWHParadise(workbook, validationSheet);
+		await translateWHParadise(workbook);
 		await evaluateRow(validationSheet);
-		await highlightAndFormat(workbook, validationSheet);
+		await highlightAndFormat(workbook);
 
-		return workbook;
+		res.setHeader("Content-Disposition", "attachment; filename=processed.xlsx");
+		res.setHeader(
+			"Content-Type",
+			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+		);
+
+		await workbook.xlsx.write(res);
+		res.end();
+
+		fs.unlinkSync(filePath);
+	} catch (err) {
+		console.error(err);
+		res.status(500).send("Error processing Excel file");
+	}
+};
+
+export const accessNIK = async (req: Request, res: Response) => {
+	try {
+		const id = req.params.id;
+		const teknisiData = await getTeknisi(id ? [id] : []);
+		if (teknisiData.length == 0) {
+			return res.status(404).send("Teknisi Not Found");
+		}
+
+		const laborAccess = await getAllUserLabor(id, teknisiData[0].id_telegram);
+
+		return res.json({
+			data: teknisiData,
+			labors: laborAccess,
+		});
 	} catch (error) {
-		console.error("Automation error:", error);
-		throw error;
+		console.error(error);
+		res.status(500).send("Error fetching teknisi data");
 	}
 };
