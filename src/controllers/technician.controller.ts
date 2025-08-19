@@ -1,11 +1,14 @@
-import type { Request, Response } from "express";
+import type { Response } from "express";
 import { trackUser, approveTeknisi } from "../utils/idmt/api";
 import { checkPersonId, getTechnicianWarehouse } from "../utils/idmt/api";
 import { csvOutput } from "../lib/json2csv";
+import { AuthenticatedIDMTRequest } from "../auth/idmt.auth";
 
-export const trackTechnicians = async (req: Request, res: Response) => {
+export const trackTechnicians = async (
+	req: AuthenticatedIDMTRequest,
+	res: Response
+) => {
 	try {
-		const adminCookie = req.cookies.idmt_admin;
 		const { labor, output } = req.body;
 
 		if (!labor) {
@@ -13,7 +16,9 @@ export const trackTechnicians = async (req: Request, res: Response) => {
 		}
 
 		const trackedData = await Promise.all(
-			labor.map((singleLabor: string) => trackUser(singleLabor, adminCookie))
+			labor.map((singleLabor: string) =>
+				trackUser(singleLabor, req.adminCookie)
+			)
 		);
 
 		if (output === "csv") {
@@ -27,9 +32,11 @@ export const trackTechnicians = async (req: Request, res: Response) => {
 	}
 };
 
-export const technicianWarehouses = async (req: Request, res: Response) => {
+export const technicianWarehouses = async (
+	req: AuthenticatedIDMTRequest,
+	res: Response
+) => {
 	try {
-		const adminCookie = req.cookies.idmt_admin;
 		const { labor, output } = req.body;
 
 		if (!labor) {
@@ -38,13 +45,13 @@ export const technicianWarehouses = async (req: Request, res: Response) => {
 
 		const trackedData = await Promise.all(
 			labor.map((singleLabor: string) =>
-				checkPersonId(singleLabor, adminCookie)
+				checkPersonId(singleLabor, req.adminCookie)
 			)
 		);
 
 		const trackedWarehouseData = await Promise.all(
 			trackedData.map((data) =>
-				getTechnicianWarehouse(data.labor, data.personId, adminCookie)
+				getTechnicianWarehouse(data.labor, data.personId, req.adminCookie)
 			)
 		);
 
@@ -59,9 +66,11 @@ export const technicianWarehouses = async (req: Request, res: Response) => {
 	}
 };
 
-export const adminApprove = async (req: Request, res: Response) => {
+export const adminApprove = async (
+	req: AuthenticatedIDMTRequest,
+	res: Response
+) => {
 	try {
-		const adminCookie = req.cookies.idmt_admin;
 		const { labor, output } = req.body;
 
 		if (!labor) {
@@ -70,13 +79,13 @@ export const adminApprove = async (req: Request, res: Response) => {
 
 		const personIdMapping = await Promise.all(
 			labor.map((singleLabor: string) =>
-				checkPersonId(singleLabor, adminCookie)
+				checkPersonId(singleLabor, req.adminCookie)
 			)
 		);
 
 		const approveResult = await Promise.all(
 			personIdMapping.map((data) =>
-				approveTeknisi(data.labor, data.personId, adminCookie)
+				approveTeknisi(data.labor, data.personId, req.adminCookie)
 			)
 		);
 
@@ -91,9 +100,11 @@ export const adminApprove = async (req: Request, res: Response) => {
 	}
 };
 
-export const superadminApprove = async (req: Request, res: Response) => {
+export const superadminApprove = async (
+	req: AuthenticatedIDMTRequest,
+	res: Response
+) => {
 	try {
-		const superAdminCookie = req.cookies.idmt_superadmin;
 		const { labor, output } = req.body;
 
 		if (!labor) {
@@ -102,13 +113,13 @@ export const superadminApprove = async (req: Request, res: Response) => {
 
 		const personIdMapping = await Promise.all(
 			labor.map((singleLabor: string) =>
-				checkPersonId(singleLabor, superAdminCookie)
+				checkPersonId(singleLabor, req.superAdminCookie)
 			)
 		);
 
 		const approveResult = await Promise.all(
 			personIdMapping.map((data) =>
-				approveTeknisi(data.labor, data.personId, superAdminCookie)
+				approveTeknisi(data.labor, data.personId, req.superAdminCookie)
 			)
 		);
 
@@ -120,5 +131,66 @@ export const superadminApprove = async (req: Request, res: Response) => {
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Error approving technician with superadmin");
+	}
+};
+
+export const completeApprove = async (
+	req: AuthenticatedIDMTRequest,
+	res: Response
+) => {
+	try {
+		const { labor, output } = req.body;
+
+		if (!labor) {
+			return res.status(400).json({ error: "Labor is required" });
+		}
+
+		if (!req.adminCookie || !req.superAdminCookie) {
+			return res.status(401).json({
+				error:
+					"Both admin and superadmin cookies are required for complete approval",
+			});
+		}
+
+		const adminPersonIdMapping = await Promise.all(
+			labor.map((singleLabor: string) =>
+				checkPersonId(singleLabor, req.adminCookie)
+			)
+		);
+
+		const adminApproveResults = await Promise.all(
+			adminPersonIdMapping.map((data) =>
+				approveTeknisi(data.labor, data.personId, req.adminCookie)
+			)
+		);
+
+		const superadminPersonIdMapping = await Promise.all(
+			labor.map((singleLabor: string) =>
+				checkPersonId(singleLabor, req.superAdminCookie)
+			)
+		);
+
+		const superadminApproveResults = await Promise.all(
+			superadminPersonIdMapping.map((data) =>
+				approveTeknisi(data.labor, data.personId, req.superAdminCookie)
+			)
+		);
+
+		const combinedResults = labor.map((singleLabor: string, index: number) => ({
+			labor: singleLabor,
+			adminPersonId: adminPersonIdMapping[index]?.personId || null,
+			adminApproveResult: adminApproveResults[index]?.data || null,
+			superadminPersonId: superadminPersonIdMapping[index]?.personId || null,
+			superadminApproveResult: superadminApproveResults[index]?.data || null,
+		}));
+
+		if (output === "csv") {
+			return csvOutput(combinedResults, res);
+		}
+
+		return res.json(combinedResults);
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Error performing complete approval");
 	}
 };

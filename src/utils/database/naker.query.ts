@@ -1,5 +1,5 @@
-import { mysqlpool as mysql } from "../lib/mysql";
-import { TeknisiType, NIKLamaType } from "../types/teknisi";
+import { mysqlpool as mysql } from "../../lib/mysql";
+import { TeknisiType, NIKLamaType } from "../../types/teknisi";
 
 export async function getTeknisi(
 	nikList: string[] = []

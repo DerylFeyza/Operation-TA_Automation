@@ -9,8 +9,8 @@ import {
 	getAksesTele,
 	getAksesMyTech,
 	getAksesSCMT,
-} from "../utils/operation.query";
-import { cekNIKLama } from "../utils/naker.query";
+} from "../utils/database/operation.query";
+import { cekNIKLama } from "../utils/database/naker.query";
 
 export const validateTeleAccess = async (
 	workbook: ExcelJS.Workbook,

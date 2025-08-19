@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { formatUnggahTeknisi, formatSCMT } from "../services/format.service";
+import { getCurrentTime } from "../utils/utils";
 import fs from "fs";
 import ExcelJS from "exceljs";
 
@@ -37,7 +38,10 @@ export const formatExecution = async (req: Request, res: Response) => {
 
 		await formatSCMT(workbook);
 
-		res.setHeader("Content-Disposition", "attachment; filename=processed.xlsx");
+		res.setHeader(
+			"Content-Disposition",
+			`attachment; filename=processed_${getCurrentTime()}.xlsx`
+		);
 		res.setHeader(
 			"Content-Type",
 			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
