@@ -16,6 +16,8 @@ const validationRoute = require("./routes/validation.route");
 app.use("/validation", validationRoute);
 const technicianRoute = require("./routes/technician.route");
 app.use("/technician", technicianRoute);
+const formatRoute = require("./routes/format.route");
+app.use("/format", formatRoute);
 
 app.listen(process.env.PORT || 3003, () => {
 	console.log(`Server running on http://localhost:${process.env.PORT || 3003}`);
