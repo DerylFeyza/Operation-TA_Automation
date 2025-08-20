@@ -1,6 +1,10 @@
 import type { Response } from "express";
 import { trackUser, approveTeknisi } from "../utils/idmt/api";
-import { checkPersonId, getTechnicianWarehouse } from "../utils/idmt/api";
+import {
+	checkPersonId,
+	getTechnicianWarehouse,
+	checkApprovalExist,
+} from "../utils/idmt/api";
 import { csvOutput } from "../lib/json2csv";
 import { AuthenticatedIDMTRequest } from "../auth/idmt.auth";
 
@@ -90,7 +94,7 @@ export const adminApprove = async (
 		);
 
 		if (output === "csv") {
-			csvOutput(approveResult, res);
+			return csvOutput(approveResult, res);
 		}
 
 		return res.json(approveResult);
@@ -113,7 +117,7 @@ export const superadminApprove = async (
 
 		const personIdMapping = await Promise.all(
 			labor.map((singleLabor: string) =>
-				checkPersonId(singleLabor, req.superAdminCookie)
+				checkApprovalExist(singleLabor, req.superAdminCookie)
 			)
 		);
 
@@ -124,7 +128,7 @@ export const superadminApprove = async (
 		);
 
 		if (output === "csv") {
-			csvOutput(approveResult, res);
+			return csvOutput(approveResult, res);
 		}
 
 		return res.json(approveResult);
@@ -154,7 +158,7 @@ export const completeApprove = async (
 
 		const adminPersonIdMapping = await Promise.all(
 			labor.map((singleLabor: string) =>
-				checkPersonId(singleLabor, req.adminCookie)
+				checkApprovalExist(singleLabor, req.adminCookie)
 			)
 		);
 
@@ -166,7 +170,7 @@ export const completeApprove = async (
 
 		const superadminPersonIdMapping = await Promise.all(
 			labor.map((singleLabor: string) =>
-				checkPersonId(singleLabor, req.superAdminCookie)
+				checkApprovalExist(singleLabor, req.superAdminCookie)
 			)
 		);
 
