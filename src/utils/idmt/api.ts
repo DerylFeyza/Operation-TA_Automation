@@ -80,7 +80,7 @@ export const checkApprovalExist = async (labor: string, cookie: string) => {
 		const id = response.data.data[0]?.id || "-";
 		const formattedResponse = {
 			labor: labor,
-			id: id,
+			personId: id,
 		};
 		return formattedResponse;
 	} catch (error) {

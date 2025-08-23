@@ -83,7 +83,7 @@ export const adminApprove = async (
 
 		const personIdMapping = await Promise.all(
 			labor.map((singleLabor: string) =>
-				checkPersonId(singleLabor, req.adminCookie)
+				checkApprovalExist(singleLabor, req.adminCookie)
 			)
 		);
 
