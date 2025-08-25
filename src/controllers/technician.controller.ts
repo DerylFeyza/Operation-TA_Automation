@@ -124,7 +124,7 @@ export const superadminApprove = async (
 
 		const approveResult = await Promise.all(
 			personIdMapping.map((data) =>
-				flagMyTechVal !== undefined
+				flagMyTechVal == true
 					? approveTeknisi(
 							data.labor,
 							data.personId,
@@ -185,7 +185,7 @@ export const completeApprove = async (
 
 		const superadminApproveResults = await Promise.all(
 			superadminPersonIdMapping.map((data) =>
-				flagMyTechVal !== undefined
+				flagMyTechVal == true
 					? approveTeknisi(
 							data.labor,
 							data.personId,
