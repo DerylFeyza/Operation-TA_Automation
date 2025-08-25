@@ -109,7 +109,8 @@ export const superadminApprove = async (
 	res: Response
 ) => {
 	try {
-		const { labor, output } = req.body;
+		const { labor, output, flagMyTech } = req.body;
+		const flagMyTechVal = flagMyTech === "true" ? true : false;
 
 		if (!labor) {
 			return res.status(400).json({ error: "Labor is required" });
@@ -123,7 +124,14 @@ export const superadminApprove = async (
 
 		const approveResult = await Promise.all(
 			personIdMapping.map((data) =>
-				approveTeknisi(data.labor, data.personId, req.superAdminCookie)
+				flagMyTechVal !== undefined
+					? approveTeknisi(
+							data.labor,
+							data.personId,
+							req.superAdminCookie,
+							flagMyTechVal
+					  )
+					: approveTeknisi(data.labor, data.personId, req.superAdminCookie)
 			)
 		);
 
@@ -143,7 +151,8 @@ export const completeApprove = async (
 	res: Response
 ) => {
 	try {
-		const { labor, output } = req.body;
+		const { labor, output, flagMyTech } = req.body;
+		const flagMyTechVal = flagMyTech === "true" ? true : false;
 
 		if (!labor) {
 			return res.status(400).json({ error: "Labor is required" });
@@ -176,7 +185,14 @@ export const completeApprove = async (
 
 		const superadminApproveResults = await Promise.all(
 			superadminPersonIdMapping.map((data) =>
-				approveTeknisi(data.labor, data.personId, req.superAdminCookie)
+				flagMyTechVal !== undefined
+					? approveTeknisi(
+							data.labor,
+							data.personId,
+							req.superAdminCookie,
+							flagMyTechVal
+					  )
+					: approveTeknisi(data.labor, data.personId, req.superAdminCookie)
 			)
 		);
 

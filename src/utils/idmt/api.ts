@@ -153,7 +153,8 @@ export const getTechnicianWarehouse = async (
 export const approveTeknisi = async (
 	labor: string,
 	personId: string,
-	cookie: string
+	cookie: string,
+	flagMyTech?: boolean
 ) => {
 	try {
 		if (personId === "-") {
@@ -162,6 +163,9 @@ export const approveTeknisi = async (
 		const api = `${IDMT_BASE}idmt/approval/approve`;
 		const formData = new FormData();
 		formData.append("personId", personId);
+		if (flagMyTech) {
+			formData.append("flagMyTech", "exist_continue");
+		}
 
 		const response = await axios.post(api, formData, {
 			headers: {
