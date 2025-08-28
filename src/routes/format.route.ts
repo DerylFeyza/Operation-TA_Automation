@@ -6,7 +6,7 @@ import {
 } from "../controllers/format.controller";
 import { upload } from "../lib/multer";
 
-app.post("/postprocess", formatExecution);
+app.post("/postprocess", upload.single("sheet"), formatExecution);
 app.post("/scmt", upload.single("file"), formatUploadSCMT);
 
 module.exports = app;
