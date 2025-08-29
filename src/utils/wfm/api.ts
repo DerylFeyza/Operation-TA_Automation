@@ -1,0 +1,62 @@
+import axios from "axios";
+const WFM_API_BASE = process.env.WFM_API_BASE;
+const WFM_BASE = process.env.WFM_BASE;
+
+export const insertIncident = async (body: Record<string, any>) => {
+	try {
+		const api = `${WFM_API_BASE}assurance/api/insert-incident`;
+
+		const response = await axios.post(api, body, {
+			headers: {
+				Authorization: `Bearer ${process.env.WFM_BEARER_TOKEN}`,
+			},
+		});
+		return {
+			data: response.data,
+		};
+	} catch (error) {
+		console.error("Error inserting incident:", error);
+		return { error: error.response?.data || error.message || "Unknown error" };
+	}
+};
+
+export const updateMilestone = async (body: Record<string, any>) => {
+	try {
+		const api = `${WFM_API_BASE}assurance/api/incident`;
+
+		const response = await axios.put(api, body, {
+			headers: {
+				Authorization: `Bearer ${process.env.WFM_BEARER_TOKEN}`,
+			},
+		});
+		return {
+			data: response.data,
+		};
+	} catch (error) {
+		console.error("Error updating milestone:", error);
+		return { error: error.response?.data || error.message || "Unknown error" };
+	}
+};
+
+export const getWFMTicketStatus = async (ticket: string) => {
+	try {
+		const api = `${WFM_BASE}duration-summary/${ticket}`;
+		const response = await axios.get(api, {
+			params: {
+				length: "-1",
+				column: "status",
+			},
+			headers: {
+				Referer: `${WFM_BASE}editticketing/${ticket}`,
+				Cookie:
+					"XSRF-TOKEN=eyJpdiI6IlJmcldDZ0NhdHVIOFpFWjZTMno5WXc9PSIsInZhbHVlIjoiMXVBWU9RWXlaUjRDd0dPOGlzUW5SVEpHUG1CWDF6NS9vT1Mva3B2WlhUTHZsWWtjNEcrdFNmUElBRzU5eEZpbGpVMlYrOGdVUnhIMEFEQlBkdW1QYjZYclRiNVNNT1FPaEdyZGR0Y1M5cUdzSHFIZ0t6WWFiTVNLVVRRYmMrR1YiLCJtYWMiOiIyMzY1MTAxOGZlYjMzNmY4ZTZmN2Y5Yjk3MDZhMTk2MjhjYzhkODA1YTEzMGVjOTIxM2M1OTczNzQyNDNlZDRmIiwidGFnIjoiIn0%3D;8R516NyNPHVzcLNAVvn4N8ym71UqXysgEaZ05how=eyJpdiI6IkYrVFRMUDBRbXhtS0c4RGpBNGRlQmc9PSIsInZhbHVlIjoiRFVJaW5rV29lS09lUnRIN0RCR3JIUldrSm10MTZhdnBhbktWd1lFdkdiS3p2Q0xDdkJGTjExNmIwWUtHRUpnMEhFNDRta1lOVGhxMkZlRWc0dHRRYWV6R211NldyTlNTVElER3lYS1Y5ZGpOaUs4TU9CNHdENFI3NytjVnRMWHVjRlhVNXYya3lFRjUzNytuYkJidlhlaGxGK0QrN2FZTXR5ODF2OC8zbnFGSmZTNVNiQmJjaTlHNGRNTit0SnQyaCt4a1IxeUlCNGR6VW5JemQ0TlFMelRzVGQ5WElDYXRTZDJNTTcrWndUR3MvVDY2bDlLZ3hPY1Z2WFczS1dscm1iRXdVb2daWHRObENicUt4cWxveEw5K2cyeGdpNmcwcWZKQkdtektUTDYyOFd1SE9FQXhiRy9FS2NJMUMyUTF2Zm5OS21Fam82RzV1R2lFQWlyWmFaakQ2SUlvUTlhT1VUTjMvNVRsVnd1NVFOQno0bEZ4b1g1WnBoQ2h5eWhTU25nZ1hUa1haRWs4YlVjd0pUaTZQNFp3K2RHQXBTcm9Lb2p4SWFBWkx5T1FQT1JMSUFoVEZSVnpGN3BBd25ObFBrdUpyOXJCVGRsci9aUG9yWXg1Mm9kYjlhQmlXcTM1MXk2UGVqRy9SaWhBano1YmJYcGFXbE1iLzZTNGdHcTBrYzBXYU96RFJKTWFFSlphelg5RHA4TC9sd04xc2dFZlpvai9tT1ZkQ3dzazV3M0laR1JBNFp5bG4zbHhIenlWcHdtdVUwOGdVcWN3NkVsc1lGczZjWGJTejZydjhmMzh4YTJaZTB4T04rZktwUG9KL251dVM2VHFXWXNxUy9FTUE3OVQ4V0tiOUdya2JjRDRKVWVuZlNjMEgyT3FWNHJ0eHoyZDVqWTgzdkg0VEZwV25ZZ1Y2elZWWmJDUnRoQjlqZzl6T2dYWXZzNlhqYThpSSsrMERUVFhpbHcwQWlXZlVXUSs5UlY5TEgxTUdEWlQxaTVZQlVUV2EraVkwOUVaY1NMZ0ZJQTFUb2pXUzNpdTFjTWZIVkxCNUE1dldhTW9qc1dtcExUSnZrWnZ5OG1TVE0vNzZQNTZsTXZXWi9Dc2lKcGNzUGxjSDhpUjA1SG9uaUFteUs2VVBCQS91cHVkR1VtM0NUeGp0MXFzdzhKc3RIY09WcnJ2QXBJR1owZUtocmx3cUdHeC94YklJSTRzbk9BZEJhbEVjQUxaVlVYYTNiU2FKTTVKd0tFNnovZmFabHBibnBFcE9iNHh0bUlJcjZzQ2hVYm4rOUhuRHlEc2k3c2M3aW4weTJxQWFNSndzbXQ3Wlp4OTlWdERuaEptMXF1b1JhbVJ2QTAybGhETEVFdEQyeVh5Yzh0TE83NDdmemdVazBrWDl0SFZVajVZR3AzZTFDaEFQa3k2Qyt3QmJYU0xiUEU5UHc0MEx3OXBucWFtNG8zRTMvb0RwM0RUK2c1NzRYcEhKUTd1cVRONUhKUnJOZUdBRXpDK3pURjZsTWxLUVBMOGRNd0VnUjJJMnNCRVMySFlaQ25SVmMvMkhYN2kxa2RUZDg0ZnFSNjNOMVJlZGJEZlZzb0oyNnF1VTZwb05nclRaVHcrTjl0a3JseEFzbzVzTkFFOTE5UnhnVDFsUFYxOTV1S1FuWmhNcTFOK2Q3T2FiZlZnV2RnQWFRZXdTSmE1WnZUTXJjV003dmNCNGFKRGhVVlA2THkzdGxHMy9TamhHOXcyODNlU2dkRDBiT2RHMU1iQVVsN2hlOHhmNjFLbzlhTkErYi84b0I3WGx3bUsrRmVKZCtTZUtCKzZpR2FzVUpnOHNkaDVFTnc2REMzeFJHOHVGelc0cWZTc2c5S1Irb05GN2djeDNGUnkzWVZTYW5UdnkvQ2pJTzB5Nnc3ZExzRy9PWW9TS1k5aGFNRWdPS21sZGdaZWw3SFU4R3EzbXZiTU0xdmJTM3NLY0p4U0d1a3FNeG9PZURoUS9sZU1wVzZsejczeXhRNDNxRlVsYnR3ZXJ0Y05EYmxHb3piblNOR3ZYQmJqQ1BxUGRjSEF0czljeFRDSlpvZGVibkIxNzNNdTBUczZ2ZjdSZFNZbkxyU1hOTUtoR0RSTFc3clcyVHBhQlRXRGtJZ1hxWFRWU2U1cCt3bDdwV1pMNk56bHRKNmk5ZG5lQTJyM2Q5b2dyNU90NFNVL3JHa0JwWW0wamN0cCs2dExkM3EvaFZGYjVxVTczYjFqbjFWYXF2ckJWTXp3TzBtS0FOcVFDbUFKVGZkbHBKNjZScFBhdjBCWFlXc0N0Q3pIZzBnSUc3WmpyR0VEVytvb2dESC9UVGFXcVhVcTc1cnlabXJhaCs1NWdET2Q4UWhQdU5aZGJ1UEdrUXMwTVV5ZEtCbElJUnBNNjUwcGVzTUJxL243UVpwQUdrcGp4MEFQZS9IdkxFUko4M3hyZWdQZ2xXU0gwY29aaER6SWhtNmdXbmo0NEsvRlFUUHA3cXV0N3hvajB1WHFzR0FXeWRxRy9rdXJvbVV0RDE4VmV4eGtFTzRHUFhSWElmbnRhTmM4OWFITVZlV2lwL2xkalZsc2dSeVhycU9HckJ3R0NPdXdMaHBMZFNBUlludVhnL3dnOGMvWXZhekNxTUljeUIvdjNDbkRZWW1zMmV6M0VTd0ZZclZSVVBVMzRKM0JFU0NGcDFQV2ZKUmE2d05zditTMHJrODdkTUtYSXFhYmNTbjJPSW9qLy90VW5PeEh3SXNXaG9oVlEzVnpRSXZYVFNablUxL2pNbXp2TGcyaHFUL2NvczJBMzFqd1dHOW51NWhXdUluVlVOTE9oMFRzQmtTYlVkUXZobFdmSlJFQUdmVzlnbTFxOFdHeUFlT2dnRUhDeUhFTHcyME9UUW96cUxWMHhnaitIdUpqZXBpbWJUTS9IckJGK0tFZUdxeEZkby8yeHlHcUVVU1MrS2tmZXVYTzA4blY1VzVLMjJRemtBYzJ2MHh1SkJ6R0JoNEpCamsvaDZDUW43TjRpVkV2cHNLQUdLbEZVRUJJQ2FtbGF3dDY4dXp1eGJ0bEsxTUk4bGFvREtiTTdKc2VzSHMrUTE3REZwTitsdmp5ZUl4eGw4anVNdzJsTTR3d2w0bXdQNURsYitYVXkxSit4WDJEMzdZS0F1OWdtNzVJR0hRbWZiLzh1aStBNWhndmdWN2JXTjNwQldXdGdhV1p1Q3VYWStnSmVvdGRCY2RsWnMwenU5QWMwZ2NXdWM4b1pFUHlqZVl3Z1JTdzdSTjJ0SXV3aXg3NUJQeW8vT3NtT0U2ZXZMbXMyUU5MRUI1R2dzdkZSM29wWGxYaFFKYkYzNGMvNUhPZmw4TlVmZkdjN2puR3R5elhUVjhFU1JQV2xudVZETFlSbDZHYm5DbTdxSW5NQURQem9samcvR1duUllQQ2xnSTBHUmxoMnc9PSIsIm1hYyI6IjJiYmU4NzNjOGI3MmUxMjYyOTZkMDJiZWJhMzk2MDk0ZGZkNDY3NmI3MTZhMzY3ZmJhMDdkODMxNzU4NWM1NjUiLCJ0YWciOiIifQ%3D%3D;laravel_session=eyJpdiI6IjY2b1FvUTY4Rzd3cUJ1dEs1VTFhL1E9PSIsInZhbHVlIjoiMHRRWHQvaUVORUFyTmZMWEJrditnRFZzOFpMUHh3RTFZS01YbTREZDI0UEVvaWc5dkpJRWF3ZGNSUEUwcjcrYzNBTGhGeFdleTgvaElCTzZqSTY5ZVRnN20wYWtBdXZRL0tpd3dQbG9HR0Q3aVFzcUVELzVBYXQ1Zi9UQW9tQU0iLCJtYWMiOiI2NjI1YjQwZWViYmViNWEyZDNiYjA2ZGM3ODQ1NGYwNGQzMjFkOWI3NWY2ODYwMWU5MzkxNDQ3YmRlODc1YTM1IiwidGFnIjoiIn0%3D",
+			},
+		});
+		return {
+			data: response.data,
+		};
+	} catch (error) {
+		console.error("Error checking ticket status:", error);
+		return { error: error.response?.data || error.message || "Unknown error" };
+	}
+};
