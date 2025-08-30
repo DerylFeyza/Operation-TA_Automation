@@ -20,6 +20,8 @@ const formatRoute = require("./routes/format.route");
 app.use("/format", formatRoute);
 const ticketRoute = require("./routes/ticket.route");
 app.use("/ticket", ticketRoute);
+const wfmRoute = require("./routes/wfm.route");
+app.use("/wfm", wfmRoute);
 app.listen(process.env.PORT || 3003, () => {
 	console.log(`Server running on http://localhost:${process.env.PORT || 3003}`);
 });

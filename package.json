@@ -4,7 +4,8 @@
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "nodemon src/index.ts"
+		"start": "nodemon src/index.ts",
+		"telegram": "nodemon src/lib/telegram/telegramLogin.ts"
 	},
 	"keywords": [],
 	"author": "",
@@ -29,10 +30,12 @@
 		"dotenv": "^17.2.0",
 		"exceljs": "^4.4.0",
 		"express": "^5.1.0",
+		"input": "^1.0.1",
 		"json2csv": "6.0.0-alpha.2",
 		"multer": "^2.0.2",
 		"mysql2": "^3.14.2",
 		"oracledb": "^6.9.0",
+		"telegram": "^2.26.22",
 		"tough-cookie": "^5.1.2",
 		"xlsx": "^0.18.5"
 	}
