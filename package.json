@@ -35,6 +35,7 @@
 		"multer": "^2.0.2",
 		"mysql2": "^3.14.2",
 		"oracledb": "^6.9.0",
+		"otplib": "^12.0.1",
 		"telegram": "^2.26.22",
 		"tough-cookie": "^5.1.2",
 		"xlsx": "^0.18.5"
